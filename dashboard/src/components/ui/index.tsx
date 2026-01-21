@@ -328,7 +328,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
                 <h1 className="heading-1">{title}</h1>
-                {description && <p className="text-[var(--text-secondary)] max-w-2xl text-sm md:text-base font-medium leading-relaxed">{description}</p>}
+                {description && <div className="text-[var(--text-secondary)] max-w-2xl text-sm md:text-base font-medium leading-relaxed">{description}</div>}
             </div>
             {actions && <div className="flex items-center gap-3 animate-fade-in stagger-2 shrink-0">{actions}</div>}
         </div>
