@@ -311,6 +311,8 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
     );
 }
 
+export { StatusBadge as Badge };
+
 // ============================================
 // PAGE HEADER
 // ============================================

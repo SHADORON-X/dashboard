@@ -5,46 +5,42 @@ import {
     Zap,
     ShieldCheck,
     Link as LinkIcon,
-    CheckCircle2,
     Clock,
     ArrowUpRight,
-    Search,
     MessageCircle,
     MapPin,
-    ExternalLink,
-    Store
+    ExternalLink
 } from 'lucide-react';
 import {
     useShopsOverview,
     useCustomerOrders,
-    useUpdateOnlineSettings,
-    formatAmount
+    useUpdateOnlineSettings
 } from '../hooks/useData';
+import { useCurrency } from '../contexts/CurrencyContext';
 import {
     PageHeader,
     StatCard,
     DataTable,
     Badge,
-    LoadingSpinner,
-    EmptyState,
-    Pagination
+    LoadingSpinner
 } from '../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CustomerOrder } from '../types/database';
+import type { CustomerOrder } from '../types/database';
 
 export default function OnlineServicesPage() {
-    const [page, setPage] = useState(1);
-    const [ordersPage, setOrdersPage] = useState(1);
+    const [page] = useState(1);
+    const [ordersPage] = useState(1);
     const limit = 10;
 
     const { data: shopsData, isLoading: shopsLoading } = useShopsOverview(page, 100);
     const { data: ordersData, isLoading: ordersLoading } = useCustomerOrders(ordersPage, limit);
     const updateSettings = useUpdateOnlineSettings();
+    const { formatAmount } = useCurrency();
 
     const publicShops = (shopsData?.data as any[])?.filter(s => s.is_public) || [];
     const totalOrders = ordersData?.total || 0;
-    const pendingOrders = ordersData?.data.filter(o => o.status === 'pending').length || 0;
+    const pendingOrders = ordersData?.data?.filter((o: CustomerOrder) => o.status === 'pending').length || 0;
 
     const toggleShopPublic = async (shopId: string, currentStatus: boolean) => {
         try {
