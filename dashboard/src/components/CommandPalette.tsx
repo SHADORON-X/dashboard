@@ -35,7 +35,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         }
     }, [isOpen]);
 
-    // Recherche via Supabase RPC
+    // Recherche via Supabase RPC + Fallback manuel si besoin
     useEffect(() => {
         const search = async () => {
             if (query.trim().length < 2) {
@@ -45,12 +45,61 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
             setLoading(true);
             try {
-                // Cast to 'any' to bypass TypeScript strict checking for custom RPC function
+                // 1. Tenter la recherche RPC (optimisée côté serveur)
                 const { data, error } = await (supabase.rpc as any)('search_all', { search_query: query });
-                if (error) throw error;
-                setResults(data || []);
+
+                if (!error && data && data.length > 0) {
+                    setResults(data);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Si RPC échoue ou ne renvoie rien, tenter une recherche manuelle sur les tables critiques
+                // Cela compense les cas où la migration SQL RPC n'a pas encore été appliquée.
+                const [productsRes, shopsRes, usersRes] = await Promise.all([
+                    supabase.from('products').select('id, name, quantity, category').ilike('name', `%${query}%`).limit(8),
+                    supabase.from('shops').select('id, name, address, location').ilike('name', `%${query}%`).limit(5),
+                    supabase.from('users').select('id, first_name, last_name, role, email').or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`).limit(5)
+                ]);
+
+                const combined: SearchResult[] = [];
+
+                if (productsRes.data) {
+                    productsRes.data.forEach(p => combined.push({
+                        type: 'product',
+                        id: p.id,
+                        title: p.name,
+                        subtitle: `Stock: ${p.quantity} | ${p.category || 'Général'}`,
+                        url: '/products',
+                        meta: p
+                    }));
+                }
+
+                if (shopsRes.data) {
+                    shopsRes.data.forEach(s => combined.push({
+                        type: 'shop',
+                        id: s.id,
+                        title: s.name,
+                        subtitle: s.address || s.location || 'Sans adresse',
+                        url: '/shops',
+                        meta: s
+                    }));
+                }
+
+                if (usersRes.data) {
+                    usersRes.data.forEach(u => combined.push({
+                        type: 'user',
+                        id: u.id,
+                        title: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+                        subtitle: `${u.role || 'Utilisateur'} | ${u.email}`,
+                        url: '/users',
+                        meta: u
+                    }));
+                }
+
+                setResults(combined);
             } catch (err) {
-                console.error("Search Error:", err);
+                console.error("Search Error (All Methods):", err);
                 setResults([]);
             } finally {
                 setLoading(false);
