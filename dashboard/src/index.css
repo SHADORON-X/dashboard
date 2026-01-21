@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* --- DARK THEME (Default) --- */
+    --bg-app: #050505;
+    --bg-sidebar: rgba(5, 5, 5, 0.9);
+    --bg-card: #0e0e11;
+    --bg-card-hover: #141418;
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-strong: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #52525b;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-glow: rgba(99, 102, 241, 0.2);
+    --glass-bg: rgba(14, 14, 17, 0.7);
+    --sidebar-width: 280px;
+
+    /* Semantic Status Colors (Dark) */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #f43f5e;
+    --info: #6366f1;
+}
+
+.light {
+    /* --- LIGHT THEME --- */
+    --bg-app: #f8fafc;
+    --bg-sidebar: rgba(255, 255, 255, 0.95);
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-strong: rgba(0, 0, 0, 0.08);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-glow: rgba(79, 70, 229, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.8);
+
+    /* Semantic Status Colors (Light) */
+    --success: #059669;
+    --warning: #d97706;
+    --error: #e11d48;
+    --info: #4f46e5;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    @apply font-sans antialiased transition-colors duration-300;
+    overflow-x: hidden;
+    background-image:
+        radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 50%),
+        radial-gradient(circle at 80% 10%, rgba(139, 92, 246, 0.05) 0%, transparent 30%);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-zinc-800 rounded-full hover:bg-zinc-700;
+}
+
+/* --- Glassmorphism Utilities --- */
+.glass-panel {
+    background-color: var(--glass-bg);
+    @apply backdrop-blur-xl border border-[var(--border-subtle)] shadow-2xl transition-colors duration-300;
+}
+
+.sidebar-glass {
+    @apply backdrop-blur-2xl border-r border-[var(--border-subtle)] transition-colors duration-300;
+    background: var(--bg-sidebar);
+}
+
+.card-dashboard {
+    background-color: var(--bg-card);
+    @apply border border-[var(--border-subtle)] rounded-2xl p-6 transition-all duration-500 hover:border-[var(--border-strong)] hover:shadow-2xl;
+    background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.01) 0%, transparent 100%);
+}
+
+.card-dashboard:hover {
+    background-color: var(--bg-card-hover);
+    @apply -translate-y-1;
+}
+
+/* --- Typography --- */
+.heading-1 {
+    color: var(--text-primary);
+    @apply text-3xl md:text-4xl font-bold tracking-tight mb-2 transition-colors duration-300;
+}
+
+.heading-2 {
+    color: var(--text-primary);
+    @apply text-xl font-semibold mb-4 transition-colors duration-300;
+}
+
+/* --- Navigation Links (Premium Glow) --- */
+.nav-link {
+    color: var(--text-secondary);
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 border border-transparent;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+    background-color: var(--border-subtle);
+}
+
+.nav-link.active {
+    background-color: var(--primary-glow);
+    color: var(--primary);
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 20px var(--primary-glow);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link.active::before {
+    content: '';
+    background-color: var(--primary);
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* --- Animations --- */
+.animate-fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-up {
+    animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-swing {
+    animation: swing 2s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes swing {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: rotate(-10deg);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: rotate(10deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
+}
