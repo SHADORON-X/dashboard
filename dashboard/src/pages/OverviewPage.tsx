@@ -71,7 +71,7 @@ export default function OverviewPage() {
             />
 
             {/* 1. KPIS GRID - Using Unified StatCard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <StatCard
                     label="Revenu Total"
                     value={formatAmount(stats?.total_gmv || 0)}
@@ -107,7 +107,7 @@ export default function OverviewPage() {
             </div>
 
             {/* 2. MAIN CHARTS & ACTIVITY AREA */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
                 {/* CHART SECTION (2/3 width) */}
                 <div className="lg:col-span-2 card-dashboard flex flex-col group">

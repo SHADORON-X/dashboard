@@ -270,7 +270,7 @@ export default function ShopsPage() {
                         description="Aucun terminal de vente ne répond à ces critères de recherche."
                     />
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 animate-fade-in">
                         {displayData.map((shop: ShopOverview) => (
                             <ShopCard
                                 key={shop.shop_id}

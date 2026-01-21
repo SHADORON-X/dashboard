@@ -155,12 +155,26 @@ textarea {
     animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-slide-in {
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .animate-swing {
     animation: swing 2s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+    .card-dashboard {
+        padding: 1rem;
+    }
+
+    .heading-1 {
+        font-size: 1.75rem;
+    }
 }
 
 @keyframes fadeIn {

@@ -145,7 +145,7 @@ export default function DebtsPage() {
             />
 
             {/* RISK OVERVIEW */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <StatCard
                     label="Volume d'Impayés"
                     value={formatAmount(debtsData?.data.reduce((acc: number, d: any) => acc + d.remaining_amount, 0) || 0)}

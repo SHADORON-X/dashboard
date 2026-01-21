@@ -145,7 +145,7 @@ export default function SalesPage() {
             />
 
             {/* KPI FINANCIALS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <StatCard
                     label="Volume 24h"
                     value={formatAmount(salesData?.data.slice(0, 5).reduce((acc: number, sale: any) => acc + sale.total_amount, 0) || 0)}
