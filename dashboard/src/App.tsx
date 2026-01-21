@@ -34,9 +34,12 @@ import OnlineServicesPage from './pages/OnlineServicesPage';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 30000,
-      refetchOnWindowFocus: false,
+      retry: 1, // Réduire les retries pour économiser
+      staleTime: 1000 * 60 * 5, // 5 minutes de cache (Données considérées comme fraiches)
+      gcTime: 1000 * 60 * 30, // 30 minutes avant suppression de la mémoire (Garbage Collection)
+      refetchOnWindowFocus: false, // Pas de refetch au focus
+      refetchOnReconnect: false, // Pas de refetch auto à la reconnexion
+      refetchOnMount: false, // Si les données sont en cache, pas de refetch au montage
     },
   },
 });

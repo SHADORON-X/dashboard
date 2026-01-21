@@ -8,11 +8,14 @@ import {
     Clock,
     ArrowUpRight,
     MessageCircle,
-    MapPin,
-    ExternalLink
+    ExternalLink,
+    AlertCircle,
+    Copy,
+    Check,
+    MapPin
 } from 'lucide-react';
 import {
-    useShopsOverview,
+    useOnlineShops,
     useCustomerOrders,
     useUpdateOnlineSettings
 } from '../hooks/useData';
@@ -26,19 +29,31 @@ import {
 } from '../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { CustomerOrder } from '../types/database';
+import type { CustomerOrder, Shop } from '../types/database';
 
 export default function OnlineServicesPage() {
-    const [page] = useState(1);
     const [ordersPage] = useState(1);
     const limit = 10;
 
-    const { data: shopsData, isLoading: shopsLoading } = useShopsOverview(page, 100);
+    // Utilisation du nouveau hook technique qui tape directement dans la table 'shops'
+    const { data: shopsData, isLoading: shopsLoading } = useOnlineShops(1, 100);
     const { data: ordersData, isLoading: ordersLoading } = useCustomerOrders(ordersPage, limit);
     const updateSettings = useUpdateOnlineSettings();
+    const [copiedShopId, setCopiedShopId] = useState<string | null>(null);
     const { formatAmount } = useCurrency();
 
-    const publicShops = (shopsData?.data as any[])?.filter(s => s.is_public) || [];
+    const handleCopyUrl = (slug: string, shopId: string) => {
+        const url = `https://velmo.shop/${slug}`;
+        navigator.clipboard.writeText(url);
+        setCopiedShopId(shopId);
+        setTimeout(() => setCopiedShopId(null), 2000);
+    };
+
+    // Mapping correct par rapport à la table 'shops' (name au lieu de shop_name)
+    const allShops = (shopsData?.data || []) as Shop[];
+    const publicShops = allShops.filter(s => s.is_public);
+    const shopsWithSlugs = allShops.filter(s => s.slug);
+
     const totalOrders = ordersData?.total || 0;
     const pendingOrders = ordersData?.data?.filter((o: CustomerOrder) => o.status === 'pending').length || 0;
 
@@ -181,60 +196,97 @@ export default function OnlineServicesPage() {
                     <div className="space-y-4">
                         {shopsLoading ? (
                             <div className="py-20 flex justify-center"><LoadingSpinner /></div>
-                        ) : (shopsData?.data as any[])?.filter(s => s.slug).length === 0 ? (
+                        ) : allShops.length === 0 ? (
+                            <div className="card-dashboard p-10 text-center opacity-60">
+                                <AlertCircle size={32} className="mx-auto mb-4 text-[var(--error)]" />
+                                <p className="text-xs font-bold uppercase tracking-widest text-[var(--error)]">Accès Refusé / Vide</p>
+                                <p className="text-[10px] text-[var(--text-muted)] mt-2 italic">Problème de permissions RLS détecté sur la table 'shops'</p>
+                            </div>
+                        ) : shopsWithSlugs.length === 0 ? (
                             <div className="card-dashboard p-10 text-center opacity-60">
                                 <Globe size={32} className="mx-auto mb-4 text-[var(--text-muted)]" />
                                 <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Aucun slug configuré</p>
                             </div>
                         ) : (
-                            (shopsData?.data as any[])?.filter(s => s.slug).map((shop) => (
-                                <div key={shop.shop_id} className="card-dashboard p-4 group">
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-app)] border border-[var(--border-subtle)] flex items-center justify-center text-lg shadow-inner">
+                            shopsWithSlugs.map((shop) => (
+                                <div key={shop.id} className="card-dashboard p-5 group hover:border-[var(--primary)]/30 transition-all duration-300">
+                                    {/* En-tête de la carte */}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-[var(--bg-app)] border border-[var(--border-subtle)] flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition-transform">
                                                 🏪
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-bold text-[var(--text-primary)]">{shop.shop_name}</h4>
-                                                <div className="flex items-center gap-1.5 mt-1">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${shop.is_active ? 'bg-[var(--success)] shadow-[0_0_5px_var(--success)]' : 'bg-[var(--text-muted)]'}`} />
-                                                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-wider">
+                                                <h4 className="text-base font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors">{shop.name}</h4>
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    <span className={`w-2 h-2 rounded-full ${shop.is_active ? 'bg-[var(--success)] shadow-[0_0_8px_var(--success)] animate-pulse' : 'bg-[var(--text-muted)]'}`} />
+                                                    <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider">
                                                         {shop.is_active ? 'Terminal Online' : 'Offline'}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => toggleShopPublic(shop.shop_id, shop.is_public)}
-                                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${shop.is_public
-                                                ? 'bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20 shadow-[0_0_10px_var(--success)]/20'
-                                                : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border border-[var(--border-subtle)]'
+                                            onClick={() => toggleShopPublic(shop.id, shop.is_public)}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shop.is_public
+                                                ? 'bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20 shadow-[0_0_10px_var(--success)]/20 hover:bg-[var(--success)]/20'
+                                                : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border border-[var(--border-subtle)] hover:bg-[var(--text-muted)]/20'
                                                 }`}
                                         >
                                             {shop.is_public ? 'Publié' : 'Privé'}
                                         </button>
                                     </div>
 
-                                    <div className="bg-[var(--bg-app)] rounded-xl p-3 border border-[var(--border-subtle)] group-hover:border-[var(--primary)]/30 transition-colors">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2 truncate">
-                                                <LinkIcon size={12} className="text-[var(--text-muted)]" />
-                                                <span className="text-[10px] font-mono text-[var(--text-secondary)] truncate">
-                                                    velmo.shop/{shop.slug}
-                                                </span>
-                                            </div>
-                                            <ExternalLink size={12} className="text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors" />
+                                    {/* Lien Slug */}
+                                    <div className="bg-[var(--bg-app)] rounded-xl p-3 border border-[var(--border-subtle)] group-hover:border-[var(--primary)]/30 transition-colors flex items-center justify-between gap-3 mb-4">
+                                        <div className="flex items-center gap-2 truncate min-w-0">
+                                            <LinkIcon size={14} className="text-[var(--primary)] shrink-0" />
+                                            <a
+                                                href={`https://velmo.shop/${shop.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-mono font-bold text-[var(--text-secondary)] truncate hover:text-[var(--primary)] transition-colors hover:underline"
+                                            >
+                                                velmo.shop/{shop.slug}
+                                            </a>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                                onClick={() => handleCopyUrl(shop.slug!, shop.id)}
+                                                className={`p-1.5 rounded-lg transition-colors ${copiedShopId === shop.id
+                                                        ? 'bg-[var(--success)]/10 text-[var(--success)]'
+                                                        : 'hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                                    }`}
+                                                title="Copier le lien"
+                                            >
+                                                {copiedShopId === shop.id ? <Check size={12} /> : <Copy size={12} />}
+                                            </button>
+                                            <a
+                                                href={`https://velmo.shop/${shop.slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1.5 hover:bg-[var(--bg-card)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                                            >
+                                                <ExternalLink size={12} />
+                                            </a>
                                         </div>
                                     </div>
 
-                                    <div className="mt-3 grid grid-cols-2 gap-2">
-                                        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-app)]/50 border border-[var(--border-subtle)]">
-                                            <ShoppingBag size={10} className="text-[var(--text-muted)]" />
-                                            <span className="text-[9px] font-bold text-[var(--text-secondary)]">{shop.orders_count || 0} cd.</span>
+                                    {/* Métriques */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--bg-app)]/50 border border-[var(--border-subtle)]">
+                                            <ShoppingBag size={14} className="text-[var(--text-muted)]" />
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">Commandes</span>
+                                                <span className="text-xs font-black text-[var(--text-primary)]">{shop.orders_count || 0}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[var(--bg-app)]/50 border border-[var(--border-subtle)]">
-                                            <ShieldCheck size={10} className={shop.is_verified ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'} />
-                                            <span className="text-[9px] font-bold text-[var(--text-secondary)]">{shop.is_verified ? 'Certifié' : 'Standard'}</span>
+                                        <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--bg-app)]/50 border border-[var(--border-subtle)]">
+                                            <ShieldCheck size={14} className={shop.is_verified ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'} />
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">Statut</span>
+                                                <span className="text-xs font-black text-[var(--text-primary)]">{shop.is_verified ? 'Certifié' : 'Standard'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -280,20 +332,30 @@ export default function OnlineServicesPage() {
     );
 }
 
-function ServiceCard({ icon: Icon, title, description, status, color }: any) {
+interface ServiceCardProps {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    status: string;
+    color: string;
+}
+
+function ServiceCard({ icon: Icon, title, description, status, color }: ServiceCardProps) {
     return (
-        <div className="card-dashboard group hover:translate-y-[-4px] transition-all">
-            <div className="flex items-start justify-between gap-4 mb-4">
-                <div className={`p-4 rounded-2xl bg-[var(--bg-app)] border border-[var(--border-subtle)] group-hover:border-[var(--primary)]/30 transition-all ${color}`}>
-                    <Icon size={24} />
+        <div className="card-dashboard group hover:translate-y-[-4px] transition-all p-6">
+            <div className="flex items-start justify-between gap-4 mb-6">
+                <div className={`p-4 rounded-2xl bg-[var(--bg-app)] border border-[var(--border-subtle)] group-hover:border-[var(--primary)]/30 transition-all shadow-sm ${color}`}>
+                    <Icon size={28} />
                 </div>
                 <Badge status="success" label={status} />
             </div>
-            <h3 className="text-base font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--primary)] transition-colors">{title}</h3>
-            <p className="text-xs text-[var(--text-muted)] font-medium leading-relaxed">{description}</p>
-            <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Sentinel Core v4</span>
-                <button className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] hover:underline">Configurer</button>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3 group-hover:text-[var(--primary)] transition-colors">{title}</h3>
+            <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed">{description}</p>
+            <div className="mt-8 pt-5 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-70">v4.0.0</span>
+                <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--primary)] hover:underline group-hover:translate-x-1 transition-transform">
+                    Configurer <ArrowUpRight size={10} />
+                </button>
             </div>
         </div>
     );

@@ -40,6 +40,7 @@ export const queryKeys = {
     debtDetails: (debtId: string) => ['debtDetails', debtId] as const,
     customerOrders: (page: number, limit: number, shopId?: string) => ['customerOrders', page, limit, shopId] as const,
     shopOnlineSettings: (shopId: string) => ['shopOnlineSettings', shopId] as const,
+    onlineShops: (page: number, limit: number) => ['onlineShops', page, limit] as const,
 };
 
 // ============================================
@@ -88,7 +89,7 @@ export function usePlatformStats() {
             }
             return data as PlatformStats;
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -120,7 +121,7 @@ export function useShopsOverview(page = 1, limit = 20) {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -139,6 +140,36 @@ export function useSearchShops(query: string) {
             return (data || []) as ShopOverview[];
         },
         enabled: query.length >= 2,
+    });
+}
+
+/**
+ * Hook pour récupérer les boutiques avec leurs paramètres de vitrine en ligne.
+ * Utilise directement la table 'shops' pour avoir accès au slug, is_public, etc.
+ */
+export function useOnlineShops(page = 1, limit = 50) {
+    return useQuery({
+        queryKey: queryKeys.onlineShops(page, limit),
+        queryFn: async () => {
+            const offset = (page - 1) * limit;
+            const { data, error, count } = await supabase
+                .from('shops')
+                .select('*', { count: 'exact' })
+                .range(offset, offset + limit - 1)
+                .order('name', { ascending: true });
+
+            if (error) {
+                console.error("❌ OnlineServices: Error fetching shops:", error);
+                throw error;
+            }
+
+            return {
+                data: (data || []) as Shop[],
+                total: count || 0,
+                totalPages: Math.ceil((count || 0) / limit),
+            };
+        },
+        staleTime: 600000,
     });
 }
 
@@ -209,7 +240,7 @@ export function useShopDetails(shopId: string | null) {
             }
         },
         enabled: !!shopId,
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -346,7 +377,7 @@ export function useAllUsers(page = 1, limit = 20, search = '') {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -390,7 +421,7 @@ export function useAllProducts(page = 1, limit = 20, search = '') {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -423,7 +454,7 @@ export function useAllSales(page = 1, limit = 20) {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -456,7 +487,7 @@ export function useAllDebts(page = 1, limit = 20) {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -501,7 +532,7 @@ export function useUserDetails(userId: string | null) {
             }
         },
         enabled: !!userId,
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -532,7 +563,7 @@ export function useProductDetails(productId: string | null) {
             };
         },
         enabled: !!productId,
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -561,7 +592,7 @@ export function useSaleDetails(saleId: string | null) {
             return data as any;
         },
         enabled: !!saleId,
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 
@@ -590,7 +621,7 @@ export function useDebtDetails(debtId: string | null) {
             return data as any;
         },
         enabled: !!debtId,
-        staleTime: 30000,
+        staleTime: 600000, // 10 minutes
     });
 }
 
@@ -662,7 +693,7 @@ export function useSilentShops() {
             if (error) throw error;
             return (data || []) as any[];
         },
-        staleTime: 60000,
+        staleTime: 600000, // 10 minutes
     });
 }
 
@@ -677,7 +708,7 @@ export function useCustomerOrders(page = 1, limit = 20, shopId?: string) {
             const offset = (page - 1) * limit;
             let query = supabase
                 .from('customer_orders')
-                .select('*, shops!inner(name)', { count: 'exact' });
+                .select('*, shops(name)', { count: 'exact' });
 
             if (shopId) {
                 query = query.eq('shop_id', shopId);
@@ -687,7 +718,10 @@ export function useCustomerOrders(page = 1, limit = 20, shopId?: string) {
                 .order('created_at', { ascending: false })
                 .range(offset, offset + limit - 1);
 
-            if (error) throw error;
+            if (error) {
+                console.error("❌ OnlineServices: Error fetching orders:", error);
+                throw error;
+            }
 
             // Flatten shop name
             const orders = (data || []).map((order: any) => ({
@@ -701,7 +735,7 @@ export function useCustomerOrders(page = 1, limit = 20, shopId?: string) {
                 totalPages: Math.ceil((count || 0) / limit),
             };
         },
-        staleTime: 30000,
+        staleTime: 600000,
     });
 }
 

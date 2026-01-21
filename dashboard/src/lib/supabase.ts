@@ -43,17 +43,16 @@ export async function checkIsVelmoAdmin(userId: string): Promise<boolean> {
 
         if (error) {
             console.error('Admin check error:', error);
-            // Fallback: vérifier dans la table velmo_admins directement
+            // Fallback: vérifier dans la table admin_users directement
             // @ts-ignore
             const { data: adminData } = await supabase
-                .from('velmo_admins')
+                .from('admin_users')
                 .select('id, role')
-                .eq('user_id', userId)
-                .eq('is_active', true)
+                .eq('id', userId)
                 .single();
 
             // @ts-ignore
-            return (adminData as any)?.role === 'super_admin';
+            return (adminData as any)?.role === 'super_admin' || (adminData as any)?.role === 'admin';
         }
 
         return data === true;
