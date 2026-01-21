@@ -397,7 +397,7 @@ export default function ShopDetailPage() {
                             columns={[
                                 {
                                     key: 'customer', header: 'Débiteur', className: 'w-[40%]',
-                                    render: (d: { customer_name: string }) => (
+                                    render: (d: any) => (
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-[var(--error)]/10 text-[var(--error)] flex items-center justify-center text-[10px] font-black">
                                                 {d.customer_name[0]}
@@ -408,11 +408,11 @@ export default function ShopDetailPage() {
                                 },
                                 {
                                     key: 'amount', header: 'Reliquat', className: 'w-[30%]',
-                                    render: (d: { remaining_amount: number }) => <span className="text-lg font-black text-[var(--error)] font-mono">{formatAmount(d.remaining_amount)}</span>
+                                    render: (d: any) => <span className="text-lg font-black text-[var(--error)] font-mono">{formatAmount(d.remaining_amount)}</span>
                                 },
                                 {
                                     key: 'date', header: 'Ouvert le', className: 'w-[30%] text-right',
-                                    render: (d: { created_at: string }) => <span className="text-xs font-black text-[var(--text-muted)] uppercase pr-4">{format(new Date(d.created_at), 'dd MMM yyyy', { locale: fr })}</span>
+                                    render: (d: any) => <span className="text-xs font-black text-[var(--text-muted)] uppercase pr-4">{format(new Date(d.created_at), 'dd MMM yyyy', { locale: fr })}</span>
                                 }
                             ]}
                             data={active_debts}
@@ -431,7 +431,7 @@ export default function ShopDetailPage() {
                             columns={[
                                 {
                                     key: 'date', header: 'Date / Heure', className: 'w-[30%]',
-                                    render: (s: { created_at: string }) => (
+                                    render: (s: any) => (
                                         <div className="flex flex-col">
                                             <span className="text-[var(--text-secondary)] font-bold">{format(new Date(s.created_at), 'dd MMM yyyy', { locale: fr })}</span>
                                             <span className="text-[10px] text-[var(--text-muted)] font-black">{format(new Date(s.created_at), 'HH:mm')}</span>
@@ -440,11 +440,11 @@ export default function ShopDetailPage() {
                                 },
                                 {
                                     key: 'items', header: 'Poids Panier', className: 'w-[20%]',
-                                    render: (s: { items_count: number }) => <span className="text-sm font-bold text-[var(--text-muted)]">{s.items_count} articles</span>
+                                    render: (s: any) => <span className="text-sm font-bold text-[var(--text-muted)]">{s.items_count} articles</span>
                                 },
                                 {
                                     key: 'total', header: 'Volume', className: 'w-[30%]',
-                                    render: (s: { total_amount: number }) => <span className="text-base font-black text-[var(--text-primary)] font-mono">{formatAmount(s.total_amount)}</span>
+                                    render: (s: any) => <span className="text-base font-black text-[var(--text-primary)] font-mono">{formatAmount(s.total_amount)}</span>
                                 },
                                 {
                                     key: 'action', header: '', className: 'w-[20%] text-right',

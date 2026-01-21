@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             // 1. Vérifier la table admin_users via RPC sécurisée
             // @ts-ignore
-            const { data: accessData, error: accessError } = await supabase.rpc('check_admin_access');
+            const { data: accessData, error: accessError } = await (supabase.rpc('check_admin_access') as any);
 
             let isAuthorized = false;
             let userRole = 'viewer';

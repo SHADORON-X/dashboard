@@ -599,14 +599,14 @@ export function useAdminActions() {
 
     const updateUserStatus = useMutation({
         mutationFn: async ({ userId, status }: { userId: string; status: UserStatus }) => {
-            const { data, error } = await (((supabase
-                .from('users')
+            const { data, error } = await (supabase
+                .from('users') as any)
                 .update({
                     status,
                     is_active: status === 'active'
-                } as any) as any)
-                .eq('id', userId) as any)
-                .select() as any)
+                })
+                .eq('id', userId)
+                .select()
                 .single();
 
             if (error) throw error;
@@ -621,14 +621,14 @@ export function useAdminActions() {
 
     const updateShopStatus = useMutation({
         mutationFn: async ({ shopId, status }: { shopId: string; status: ShopStatus }) => {
-            const { data, error } = await (((supabase
-                .from('shops')
+            const { data, error } = await (supabase
+                .from('shops') as any)
                 .update({
                     status,
                     is_active: status === 'active'
-                } as any) as any)
-                .eq('id', shopId) as any)
-                .select() as any)
+                })
+                .eq('id', shopId)
+                .select()
                 .single();
 
             if (error) throw error;
