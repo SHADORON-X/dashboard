@@ -10,7 +10,7 @@ import { fr } from 'date-fns/locale';
 
 import { useAllSales } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { PageHeader, DataTable, Pagination, StatCard, StatusBadge } from '../components/ui';
+import { PageHeader, DataTable, Pagination, StatCard, StatusBadge, ExpandableValue } from '../components/ui';
 
 export default function SalesPage() {
     const navigate = useNavigate();
@@ -75,9 +75,10 @@ export default function SalesPage() {
             className: 'w-[15%] min-w-[140px]',
             render: (sale: any) => (
                 <div className="flex flex-col">
-                    <span className="font-black text-[var(--text-primary)] text-base tracking-tight">
-                        {formatAmount(sale.total_amount)}
-                    </span>
+                    <ExpandableValue
+                        value={formatAmount(sale.total_amount)}
+                        className="font-black text-[var(--text-primary)] text-base tracking-tight"
+                    />
                     {sale.discount_amount > 0 && (
                         <span className="text-[10px] text-[var(--success)] font-bold">
                             Remise: -{formatAmount(sale.discount_amount)}

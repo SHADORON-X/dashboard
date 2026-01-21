@@ -19,7 +19,7 @@ import { useShopsOverview, useAdminActions, useSearchShops } from '../hooks/useD
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useToast } from '../contexts/ToastContext';
 import type { ShopOverview, ShopStatus } from '../types/database';
-import { PageHeader, StatCard, StatusBadge, LoadingSpinner, EmptyState } from '../components/ui';
+import { PageHeader, StatCard, StatusBadge, LoadingSpinner, EmptyState, ExpandableValue } from '../components/ui';
 
 // ============================================
 // COMPOSANT CARTE BOUTIQUE (Premium Grid)
@@ -101,17 +101,19 @@ const ShopCard = ({
                     <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1.5 flex items-center gap-1">
                         <TrendingUp size={10} /> Revenu (GMV)
                     </span>
-                    <p className="text-sm font-black text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors truncate" title={formatAmount(shop.total_revenue)}>
-                        {formatAmount(shop.total_revenue)}
-                    </p>
+                    <ExpandableValue
+                        value={formatAmount(shop.total_revenue)}
+                        className="text-sm font-black text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                    />
                 </div>
                 <div className="flex flex-col min-w-0">
                     <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1.5 flex items-center gap-1">
                         <ShoppingBag size={10} /> Transactions
                     </span>
-                    <p className="text-sm font-black text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors truncate" title={String(shop.total_sales)}>
-                        {formatNumber(shop.total_sales)}
-                    </p>
+                    <ExpandableValue
+                        value={formatNumber(shop.total_sales)}
+                        className="text-sm font-black text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                    />
                 </div>
             </div>
 

@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { usePlatformStats, useDailySales, useRealtimeActivity } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { StatCard, PageHeader, LoadingSpinner } from '../components/ui';
+import { StatCard, PageHeader, LoadingSpinner, ExpandableValue } from '../components/ui';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -60,11 +60,12 @@ export default function OverviewPage() {
                 }
                 actions={
                     <div className="hidden sm:flex items-center gap-3">
-                        <div className="px-5 py-2.5 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-2xl flex flex-col items-end shadow-lg shadow-[var(--primary)]/5 min-w-0 max-w-[200px]">
+                        <div className="px-5 py-2.5 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded-2xl flex flex-col items-end shadow-lg shadow-[var(--primary)]/5 min-w-0">
                             <span className="text-[10px] uppercase text-[var(--primary)] font-black tracking-tighter opacity-70 whitespace-nowrap">Volume Total (GMV)</span>
-                            <span className="text-lg font-bold text-[var(--text-primary)] tracking-tight truncate w-full text-right" title={formatAmount(stats?.total_gmv || 0)}>
-                                {formatAmount(stats?.total_gmv || 0)}
-                            </span>
+                            <ExpandableValue
+                                value={formatAmount(stats?.total_gmv || 0)}
+                                className="text-lg font-bold text-[var(--text-primary)] tracking-tight text-right w-full"
+                            />
                         </div>
                     </div>
                 }

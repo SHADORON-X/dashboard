@@ -25,6 +25,7 @@ export function StatCard({
     variant = 'default',
     loading = false
 }: StatCardProps) {
+    const [isExpanded, setIsExpanded] = React.useState(false);
     const variantStyles: Record<string, { bg: string, text: string, border: string }> = {
         default: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20' },
         success: { bg: 'bg-[var(--success)]/10', text: 'text-[var(--success)]', border: 'border-[var(--success)]/20' },
@@ -51,7 +52,7 @@ export function StatCard({
     }
 
     return (
-        <div className="card-dashboard group relative overflow-hidden">
+        <div className="card-dashboard group relative overflow-hidden transition-all duration-500">
             {/* Background Glow Effect */}
             <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 ${style.bg}`} />
 
@@ -66,11 +67,13 @@ export function StatCard({
 
             <div className="mt-4 relative z-10 min-w-0">
                 <h3
-                    className={`font-black tracking-tight text-[var(--text-primary)] group-hover:translate-x-1 transition-transform duration-500 truncate
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className={`font-black tracking-tight text-[var(--text-primary)] transition-all duration-300 cursor-pointer
+                        ${isExpanded ? '' : 'truncate whitespace-nowrap'}
                         ${String(value).length > 15 ? 'text-xl sm:text-2xl' :
                             String(value).length > 12 ? 'text-2xl sm:text-3xl' :
                                 'text-3xl sm:text-4xl'}`}
-                    title={String(value)}
+                    title={isExpanded ? "Cliquez pour réduire" : String(value)}
                 >
                     {value}
                 </h3>
@@ -93,6 +96,7 @@ export function StatCard({
         </div>
     );
 }
+
 
 // ============================================
 // DATA TABLE
@@ -355,5 +359,22 @@ export function EmptyState({ icon: Icon, title, description, action }: { icon?: 
             {description && <p className="text-[var(--text-secondary)] mb-8 max-w-sm mx-auto text-sm leading-relaxed">{description}</p>}
             {action}
         </div>
+    );
+}
+
+// ============================================
+// EXPANDABLE VALUE (For long prices/text)
+// ============================================
+
+export function ExpandableValue({ value, className = "", title }: { value: string | number, className?: string, title?: string }) {
+    const [isExpanded, setIsExpanded] = React.useState(false);
+    return (
+        <span
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+            className={`cursor-pointer transition-all duration-300 ${isExpanded ? 'whitespace-normal break-words' : 'truncate whitespace-nowrap block'} ${className}`}
+            title={isExpanded ? "Cliquez pour réduire" : (title || String(value))}
+        >
+            {value}
+        </span>
     );
 }

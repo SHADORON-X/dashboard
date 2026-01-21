@@ -25,7 +25,8 @@ import {
     StatCard,
     DataTable,
     Badge,
-    LoadingSpinner
+    LoadingSpinner,
+    ExpandableValue
 } from '../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -152,9 +153,10 @@ export default function OnlineServicesPage() {
                                     key: 'amount',
                                     header: 'Montant',
                                     render: (order: CustomerOrder) => (
-                                        <span className="font-black text-[var(--primary)]">
-                                            {formatAmount(order.total_amount)}
-                                        </span>
+                                        <ExpandableValue
+                                            value={formatAmount(order.total_amount)}
+                                            className="font-black text-[var(--primary)]"
+                                        />
                                     )
                                 },
                                 {
@@ -254,8 +256,8 @@ export default function OnlineServicesPage() {
                                             <button
                                                 onClick={() => handleCopyUrl(shop.slug!, shop.id)}
                                                 className={`p-1.5 rounded-lg transition-colors ${copiedShopId === shop.id
-                                                        ? 'bg-[var(--success)]/10 text-[var(--success)]'
-                                                        : 'hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                                                    ? 'bg-[var(--success)]/10 text-[var(--success)]'
+                                                    : 'hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                                                     }`}
                                                 title="Copier le lien"
                                             >

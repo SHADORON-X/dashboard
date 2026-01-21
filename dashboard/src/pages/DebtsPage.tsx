@@ -10,7 +10,7 @@ import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useAllDebts } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { PageHeader, DataTable, Pagination, StatCard, StatusBadge } from '../components/ui';
+import { PageHeader, DataTable, Pagination, StatCard, StatusBadge, ExpandableValue } from '../components/ui';
 
 export default function DebtsPage() {
     const navigate = useNavigate();
@@ -54,9 +54,10 @@ export default function DebtsPage() {
             className: 'w-[15%] min-w-[120px]',
             render: (debt: any) => (
                 <div className="flex flex-col">
-                    <span className="font-black text-[var(--error)] text-base tracking-tight">
-                        {formatAmount(debt.remaining_amount)}
-                    </span>
+                    <ExpandableValue
+                        value={formatAmount(debt.remaining_amount)}
+                        className="font-black text-[var(--error)] text-base tracking-tight"
+                    />
                     <span className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-0.5">Sur {formatAmount(debt.total_amount)}</span>
                 </div>
             ),

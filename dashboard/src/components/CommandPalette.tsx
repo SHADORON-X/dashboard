@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Search, Package, User, Store, ShoppingBag,
-    ArrowRight, Command, Loader2
+    ArrowRight, Command, Loader2, FileWarning
 } from 'lucide-react';
 import supabase from '../lib/supabase';
 
 // Types pour les résultats
 type SearchResult = {
-    type: 'product' | 'user' | 'shop' | 'sale';
+    type: 'product' | 'user' | 'shop' | 'sale' | 'debt';
     id: string;
     title: string;
     subtitle: string;
@@ -80,6 +80,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         if (finalUrl === '/users') finalUrl = `/users/${result.id}`;
         if (finalUrl === '/shops') finalUrl = `/shops/${result.id}`;
         if (finalUrl === '/sales') finalUrl = `/sales/${result.id}`;
+        if (finalUrl === '/debts') finalUrl = `/debts/${result.id}`;
 
         navigate(finalUrl);
         onClose();
@@ -92,6 +93,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             case 'user': return <User size={18} className="text-violet-500" />;
             case 'shop': return <Store size={18} className="text-[var(--primary)]" />;
             case 'sale': return <ShoppingBag size={18} className="text-[var(--success)]" />;
+            case 'debt': return <FileWarning size={18} className="text-[var(--error)]" />;
             default: return <Search size={18} className="text-[var(--text-muted)]" />;
         }
     };
