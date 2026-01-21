@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Globe,
     ShoppingBag,
@@ -207,8 +207,8 @@ export default function OnlineServicesPage() {
                                         <button
                                             onClick={() => toggleShopPublic(shop.shop_id, shop.is_public)}
                                             className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${shop.is_public
-                                                    ? 'bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20 shadow-[0_0_10px_var(--success)]/20'
-                                                    : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border border-[var(--border-subtle)]'
+                                                ? 'bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20 shadow-[0_0_10px_var(--success)]/20'
+                                                : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border border-[var(--border-subtle)]'
                                                 }`}
                                         >
                                             {shop.is_public ? 'Publié' : 'Privé'}
