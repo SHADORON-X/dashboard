@@ -14,12 +14,14 @@ import {
     Check,
     MapPin
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     useOnlineShops,
     useCustomerOrders,
     useUpdateOnlineSettings
 } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import {
     PageHeader,
     StatCard,
@@ -33,6 +35,7 @@ import { fr } from 'date-fns/locale';
 import type { CustomerOrder, Shop } from '../types/database';
 
 export default function OnlineServicesPage() {
+    const { addToast } = useToast();
     const [ordersPage] = useState(1);
     const limit = 10;
 
@@ -47,6 +50,11 @@ export default function OnlineServicesPage() {
         const url = `https://velmo.shop/${slug}`;
         navigator.clipboard.writeText(url);
         setCopiedShopId(shopId);
+        addToast({
+            title: 'Lien copié',
+            message: "L'URL de la vitrine a été enregistrée dans le presse-papiers.",
+            type: 'success'
+        });
         setTimeout(() => setCopiedShopId(null), 2000);
     };
 
@@ -59,13 +67,23 @@ export default function OnlineServicesPage() {
     const pendingOrders = ordersData?.data?.filter((o: CustomerOrder) => o.status === 'pending').length || 0;
 
     const toggleShopPublic = async (shopId: string, currentStatus: boolean) => {
+        const actionLabel = !currentStatus ? 'publiée' : 'passée en privé';
         try {
             await updateSettings.mutateAsync({
                 shopId,
                 updates: { is_public: !currentStatus }
             });
+            addToast({
+                title: 'Mise à jour réussie',
+                message: `La boutique a été ${actionLabel} avec succès.`,
+                type: 'success'
+            });
         } catch (err) {
-            console.error("Failed to update shop status", err);
+            addToast({
+                title: 'Erreur',
+                message: "Échec de la mise à jour de la visibilité.",
+                type: 'error'
+            });
         }
     };
 
@@ -76,7 +94,7 @@ export default function OnlineServicesPage() {
                 description="Supervision de la présence en ligne, des boutiques publiques et des commandes clients directes."
                 actions={
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)]/10 rounded-xl border border-[var(--primary)]/20">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)]/10 rounded-xl border border-[var(--primary)]/20 shadow-sm shadow-[var(--primary)]/5">
                             <Zap size={16} className="text-[var(--primary)] animate-pulse" />
                             <span className="text-[10px] font-black uppercase text-[var(--primary)] tracking-widest">Sentinel Online Actif</span>
                         </div>
@@ -90,6 +108,7 @@ export default function OnlineServicesPage() {
                     value={publicShops.length}
                     icon={Globe}
                     variant="info"
+                    index={0}
                     changeLabel="Indexées sur le web"
                 />
                 <StatCard
@@ -97,6 +116,7 @@ export default function OnlineServicesPage() {
                     value={totalOrders}
                     icon={ShoppingBag}
                     variant="success"
+                    index={1}
                     changeLabel="Total historique"
                 />
                 <StatCard
@@ -104,6 +124,7 @@ export default function OnlineServicesPage() {
                     value={pendingOrders}
                     icon={Clock}
                     variant="warning"
+                    index={2}
                     changeLabel="Nouveaux flux"
                 />
                 <StatCard
@@ -111,6 +132,7 @@ export default function OnlineServicesPage() {
                     value="3.8%"
                     icon={ArrowUpRight}
                     variant="default"
+                    index={3}
                     changeLabel="Performance web"
                 />
             </div>
@@ -210,8 +232,14 @@ export default function OnlineServicesPage() {
                                 <p className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">Aucun slug configuré</p>
                             </div>
                         ) : (
-                            shopsWithSlugs.map((shop) => (
-                                <div key={shop.id} className="card-dashboard p-5 group hover:border-[var(--primary)]/30 transition-all duration-300">
+                            shopsWithSlugs.map((shop, idx) => (
+                                <motion.div
+                                    key={shop.id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 0.4) }}
+                                    className="card-dashboard p-5 group hover:border-[var(--primary)]/30 transition-all duration-300"
+                                >
                                     {/* En-tête de la carte */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-4">
@@ -291,7 +319,7 @@ export default function OnlineServicesPage() {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))
                         )}
                     </div>
@@ -313,6 +341,7 @@ export default function OnlineServicesPage() {
                         description="Hébergement du catalogue interactif accessible via QR Code ou lien court."
                         status="Actif"
                         color="text-[var(--info)]"
+                        index={0}
                     />
                     <ServiceCard
                         icon={MessageCircle}
@@ -320,6 +349,7 @@ export default function OnlineServicesPage() {
                         description="Envoi automatique des commandes directement sur le mobile du vendeur."
                         status="Actif"
                         color="text-[var(--success)]"
+                        index={1}
                     />
                     <ServiceCard
                         icon={MapPin}
@@ -327,6 +357,7 @@ export default function OnlineServicesPage() {
                         description="Indexation Google Maps et affichage de la position exacte du point de vente."
                         status="Configuré"
                         color="text-amber-400"
+                        index={2}
                     />
                 </div>
             </div>
@@ -340,11 +371,26 @@ interface ServiceCardProps {
     description: string;
     status: string;
     color: string;
+    index: number;
 }
 
-function ServiceCard({ icon: Icon, title, description, status, color }: ServiceCardProps) {
+function ServiceCard({ icon: Icon, title, description, status, color, index }: ServiceCardProps) {
+    const { addToast } = useToast();
+    const handleConfig = () => {
+        addToast({
+            title: 'Configuration Service',
+            message: `Le module ${title} est déjà optimisé. Les options avancées seront disponibles bientôt.`,
+            type: 'info'
+        });
+    };
+
     return (
-        <div className="card-dashboard group hover:translate-y-[-4px] transition-all p-6">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: Math.min(index * 0.1, 0.5) }}
+            className="card-dashboard group hover:translate-y-[-4px] transition-all p-6"
+        >
             <div className="flex items-start justify-between gap-4 mb-6">
                 <div className={`p-4 rounded-2xl bg-[var(--bg-app)] border border-[var(--border-subtle)] group-hover:border-[var(--primary)]/30 transition-all shadow-sm ${color}`}>
                     <Icon size={28} />
@@ -355,10 +401,13 @@ function ServiceCard({ icon: Icon, title, description, status, color }: ServiceC
             <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed">{description}</p>
             <div className="mt-8 pt-5 border-t border-[var(--border-subtle)] flex items-center justify-between">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-70">v4.0.0</span>
-                <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--primary)] hover:underline group-hover:translate-x-1 transition-transform">
+                <button
+                    onClick={handleConfig}
+                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--primary)] hover:underline group-hover:translate-x-1 transition-transform"
+                >
                     Configurer <ArrowUpRight size={10} />
                 </button>
             </div>
-        </div>
+        </motion.div>
     );
 }

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePlatformStats, useDailySales, useRealtimeActivity } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { StatCard, PageHeader, LoadingSpinner, ExpandableValue } from '../components/ui';
@@ -80,6 +81,7 @@ export default function OverviewPage() {
                     change={12.5}
                     changeLabel="vs mois dernier"
                     variant="info"
+                    index={0}
                 />
                 <StatCard
                     label="Ventes (24h)"
@@ -88,6 +90,7 @@ export default function OverviewPage() {
                     change={8.2}
                     changeLabel="Commandes aujourd'hui"
                     variant="success"
+                    index={1}
                 />
                 <StatCard
                     label="Boutiques Actives"
@@ -96,6 +99,7 @@ export default function OverviewPage() {
                     change={5.0}
                     changeLabel="Nouveaux lancements"
                     variant="default"
+                    index={2}
                 />
                 <StatCard
                     label="Dettes en Cours"
@@ -104,6 +108,7 @@ export default function OverviewPage() {
                     change={-2.4}
                     changeLabel="Recouvrement actif"
                     variant="warning"
+                    index={3}
                 />
             </div>
 
@@ -111,7 +116,12 @@ export default function OverviewPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
                 {/* CHART SECTION (2/3 width) */}
-                <div className="lg:col-span-2 card-dashboard flex flex-col group">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="lg:col-span-2 card-dashboard flex flex-col group"
+                >
                     <div className="flex justify-between items-center mb-10">
                         <div>
                             <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
@@ -178,13 +188,18 @@ export default function OverviewPage() {
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* RECENT ACTIVITY & SMALL STATS */}
                 <div className="flex flex-col gap-8">
 
                     {/* Activity Feed (Command Center Style) */}
-                    <div className="card-dashboard flex-1">
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        className="card-dashboard flex-1"
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2 uppercase tracking-widest">
                                 <ActivityIcon size={16} className="text-[var(--success)]" />
@@ -205,8 +220,11 @@ export default function OverviewPage() {
                             ) : (
                                 <div className="space-y-1">
                                     {activities?.map((activity, idx) => (
-                                        <div
+                                        <motion.div
                                             key={idx}
+                                            initial={{ opacity: 0, x: 10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.3, delay: 0.4 + (idx * 0.05) }}
                                             onClick={() => {
                                                 const path = activity.activity_type === 'sale'
                                                     ? `/sales/${activity.entity_id}`
@@ -218,7 +236,7 @@ export default function OverviewPage() {
                                         >
                                             <div className={`
                                                 w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border shadow-lg transition-transform group-hover:scale-110
-                                                ${activity.activity_type === 'sale' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20' : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/20'}
+                                                ${activity.activity_type === 'sale' ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20 shadow-[var(--primary)]/5' : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/20 shadow-[var(--warning)]/5'}
                                             `}>
                                                 {activity.activity_type === 'sale' ? <ShoppingBag size={14} /> : <AlertTriangle size={14} />}
                                             </div>
@@ -236,7 +254,7 @@ export default function OverviewPage() {
                                                     Boutique: <span className="text-[var(--text-secondary)] font-bold">{activity.shop_name}</span>
                                                 </p>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     ))}
                                 </div>
                             )}
@@ -244,31 +262,43 @@ export default function OverviewPage() {
 
                         <button
                             onClick={() => navigate('/activity')}
-                            className="w-full mt-6 py-3 text-[10px] font-black text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/5 border border-[var(--border-subtle)] rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest group"
+                            className="w-full mt-6 py-3 text-[10px] font-black text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/5 border border-[var(--border-subtle)] rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest group shadow-sm active:scale-95"
                         >
                             Consulter l'historique complet <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </button>
-                    </div>
+                    </motion.div>
 
                     {/* Infrastructure Overview Mini Grid */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="card-dashboard group hover:border-[var(--primary)]/30 transition-all cursor-default">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.5 }}
+                            whileHover={{ y: -5, scale: 1.02 }}
+                            className="card-dashboard group hover:border-[var(--primary)]/30 transition-all cursor-default"
+                        >
                             <div className="flex items-center justify-between mb-2">
                                 <Users size={20} className="text-[var(--primary)] group-hover:scale-110 transition-transform" />
                                 <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-widest">+2 today</span>
                             </div>
                             <h4 className="text-2xl font-black text-[var(--text-primary)]">{formatNumber(stats?.total_active_users || 0)}</h4>
                             <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-1">Agents</p>
-                        </div>
+                        </motion.div>
 
-                        <div className="card-dashboard group hover:border-[var(--info)]/30 transition-all cursor-default">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.6 }}
+                            whileHover={{ y: -5, scale: 1.02 }}
+                            className="card-dashboard group hover:border-[var(--info)]/30 transition-all cursor-default"
+                        >
                             <div className="flex items-center justify-between mb-2">
                                 <Package size={20} className="text-[var(--info)] group-hover:scale-110 transition-transform" />
                                 <span className="text-[9px] font-black text-[var(--info)] uppercase tracking-widest">Global</span>
                             </div>
                             <h4 className="text-2xl font-black text-[var(--text-primary)]">{formatNumber(stats?.total_products || 0)}</h4>
                             <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-1">Articles</p>
-                        </div>
+                        </motion.div>
                     </div>
 
                 </div>

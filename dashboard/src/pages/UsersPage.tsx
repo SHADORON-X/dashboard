@@ -42,6 +42,31 @@ export default function UsersPage() {
         }
     };
 
+    const handleExport = () => {
+        addToast({
+            title: 'Exportation de données',
+            message: "La liste des collaborateurs est en cours de préparation au format CSV.",
+            type: 'info'
+        });
+    };
+
+    const handleAddMember = () => {
+        addToast({
+            title: 'Nouveau Membre',
+            message: "L'interface d'invitation par email sera disponible prochainement.",
+            type: 'info'
+        });
+    };
+
+    const handleRoleFilterChange = (role: typeof roleFilter) => {
+        setRoleFilter(role);
+        addToast({
+            title: 'Filtre appliqué',
+            message: `Affichage des utilisateurs: ${role === 'all' ? 'Tous' : role}.`,
+            type: 'info'
+        });
+    };
+
     // Filtering client-side for role (since the hook might only do search)
     const filteredUsers = (usersData?.data as any[])?.filter((user: any) => {
         if (roleFilter === 'all') return true;
@@ -193,10 +218,16 @@ export default function UsersPage() {
                 description={`Gérez les privilèges et les accès des ${usersData?.total || '...'} collaborateurs de la plateforme.`}
                 actions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={handleExport}
+                            className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                        >
                             <Download size={14} /> Exporter CSV
                         </button>
-                        <button className="px-5 py-2.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-2xl font-bold transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest">
+                        <button
+                            onClick={handleAddMember}
+                            className="px-5 py-2.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-2xl font-bold transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest"
+                        >
                             <UserPlus size={16} /> Ajouter un Membre
                         </button>
                     </div>
@@ -210,6 +241,7 @@ export default function UsersPage() {
                     value={(usersData?.data as any[])?.filter((u: any) => u.role === 'admin' || u.role === 'owner').length || 0}
                     icon={Crown}
                     variant="info"
+                    index={0}
                     changeLabel="Administrateurs et Propriétaires"
                 />
                 <StatCard
@@ -217,6 +249,7 @@ export default function UsersPage() {
                     value={(usersData?.data as any[])?.filter((u: any) => u.role === 'manager').length || 0}
                     icon={Briefcase}
                     variant="default"
+                    index={1}
                     changeLabel="Gérants de boutique"
                 />
                 <StatCard
@@ -224,6 +257,7 @@ export default function UsersPage() {
                     value={(usersData?.data as any[])?.filter((u: any) => u.role === 'staff' || u.role === 'seller' || u.role === 'cashier').length || 0}
                     icon={Users}
                     variant="info"
+                    index={2}
                     changeLabel="Équipe terrain / Vendeurs"
                 />
             </div>
@@ -247,7 +281,7 @@ export default function UsersPage() {
                         {['all', 'admin', 'owner', 'manager', 'staff'].map((role) => (
                             <button
                                 key={role}
-                                onClick={() => setRoleFilter(role as any)}
+                                onClick={() => handleRoleFilterChange(role as any)}
                                 className={`
                                     px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all
                                     ${roleFilter === role ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}

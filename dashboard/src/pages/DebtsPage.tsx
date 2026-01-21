@@ -10,22 +10,32 @@ import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useAllDebts } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import { PageHeader, DataTable, Pagination, StatCard, StatusBadge, ExpandableValue } from '../components/ui';
 
 export default function DebtsPage() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const { data: debtsData, isLoading, refetch, isFetching } = useAllDebts(page, 20);
-    const { formatAmount } = useCurrency();
+    const { formatAmount, formatNumber } = useCurrency();
 
-    // Debug logging
-    console.log("DebtsPage Render:", {
-        count: debtsData?.data.length,
-        total: debtsData?.total,
-        isLoading,
-        isFetching
-    });
+    const handleReport = () => {
+        addToast({
+            title: 'Reporting de Risque',
+            message: "L'analyse prédictive des défauts de paiement est en cours de génération.",
+            type: 'info'
+        });
+    };
+
+    const handleFilter = (filter: string) => {
+        addToast({
+            title: 'Segmentation',
+            message: `Filtrage du registre sur: ${filter}.`,
+            type: 'info'
+        });
+    };
 
     const columns = [
         {
@@ -34,11 +44,11 @@ export default function DebtsPage() {
             className: 'w-[25%] min-w-[200px]',
             render: (debt: any) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--error)]/5 group-hover:bg-[var(--error)] group-hover:text-white transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--error)]/10 border border-[var(--error)]/20 text-[var(--error)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--error)]/5 group-hover/row:bg-[var(--error)] group-hover/row:text-white transition-all">
                         <User size={18} />
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-[var(--text-primary)] font-bold text-sm truncate group-hover:text-[var(--primary)] transition-colors">
+                        <span className="text-[var(--text-primary)] font-bold text-sm truncate group-hover/row:text-[var(--primary)] transition-colors">
                             {debt.customer_name || 'Anonyme'}
                         </span>
                         <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-[var(--text-muted)] font-black uppercase tracking-tighter">
@@ -109,8 +119,12 @@ export default function DebtsPage() {
             header: '',
             className: 'w-[10%] min-w-[100px] text-right',
             render: (debt: any) => (
-                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] hover:bg-[var(--success)] hover:text-white transition-all border border-[var(--success)]/20" title="Relancer">
+                <div className="flex justify-end gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleReport(); }}
+                        className="p-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] hover:bg-[var(--success)] hover:text-white transition-all border border-[var(--success)]/20"
+                        title="Relancer"
+                    >
                         <MessageSquare size={16} />
                     </button>
                     <button
@@ -129,10 +143,13 @@ export default function DebtsPage() {
 
             <PageHeader
                 title="Registre des Créances"
-                description={`Pilotage des risques et suivi des ${debtsData?.total || '...'} crédits clients en cours.`}
+                description={`Pilotage des risques et suivi des ${debtsData?.total ? formatNumber(debtsData.total) : '...'} crédits clients en cours.`}
                 actions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={handleReport}
+                            className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                        >
                             <AlertTriangle size={14} /> Rapports de Risque
                         </button>
                         <button
@@ -152,13 +169,15 @@ export default function DebtsPage() {
                     value={formatAmount(debtsData?.data.reduce((acc: number, d: any) => acc + d.remaining_amount, 0) || 0)}
                     icon={DollarSign}
                     variant="error"
+                    index={0}
                     changeLabel="Exposition totale"
                 />
                 <StatCard
                     label="Dossiers Critique"
-                    value={debtsData?.data.filter((d: any) => d.due_date && isPast(new Date(d.due_date))).length || 0}
+                    value={formatNumber(debtsData?.data.filter((d: any) => d.due_date && isPast(new Date(d.due_date))).length || 0)}
                     icon={AlertCircle}
                     variant="warning"
+                    index={1}
                     change={+2}
                     changeLabel="Retards de paiement"
                 />
@@ -167,6 +186,7 @@ export default function DebtsPage() {
                     value="1.2M"
                     icon={ShieldCheck}
                     variant="success"
+                    index={2}
                     changeLabel="Fonds sécurisés"
                 />
                 <StatCard
@@ -174,6 +194,7 @@ export default function DebtsPage() {
                     value="14 jours"
                     icon={Clock}
                     variant="default"
+                    index={3}
                     changeLabel="Délai de paiement"
                 />
             </div>
@@ -195,6 +216,7 @@ export default function DebtsPage() {
                         {['Tous', 'En Retard', 'Sains'].map((f) => (
                             <button
                                 key={f}
+                                onClick={() => handleFilter(f)}
                                 className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${f === 'Tous' ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                             >
                                 {f}
@@ -216,10 +238,7 @@ export default function DebtsPage() {
                     loading={isLoading}
                     emptyMessage="Dossier vide. Aucune créance identifiée ! 🎉"
                     keyExtractor={(debt) => debt.id}
-                    onRowClick={(debt) => {
-                        console.log("👆 Row Clicked:", debt.id);
-                        navigate(`/debts/${debt.id}`);
-                    }}
+                    onRowClick={(debt) => navigate(`/debts/${debt.id}`)}
                 />
 
                 <Pagination

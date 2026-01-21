@@ -8,17 +8,43 @@ import {
 
 import { useAllProducts } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import { PageHeader, DataTable, Pagination, StatCard, StatusBadge } from '../components/ui';
 
 export default function ProductsPage() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const { data: productsData, isLoading, refetch, isFetching } = useAllProducts(page, 20, search);
     const { formatAmount, formatNumber } = useCurrency();
 
     const lowStockCount = productsData?.data.filter((p: any) => p.quantity <= (p.stock_alert || 5)).length || 0;
-    const totalValue = productsData?.data.reduce((acc: number, p: any) => acc + (p.price_sale * p.quantity), 0) || 0;
+    const totalValue = productsData?.data.reduce((acc: number, p: any) => acc + (p.price_sale * (p.quantity || 0)), 0) || 0;
+
+    const handleNewProduct = () => {
+        addToast({
+            title: 'Nouveau Produit',
+            message: "L'interface de création de produit sera disponible dans la prochaine mise à jour système.",
+            type: 'info'
+        });
+    };
+
+    const handleManageCategories = () => {
+        addToast({
+            title: 'Gestion Catégories',
+            message: 'Accès au gestionnaire de taxonomies en cours de déploiement.',
+            type: 'info'
+        });
+    };
+
+    const handleAutomation = () => {
+        addToast({
+            title: 'Automatisation',
+            message: 'Analyse des stocks en cours... Bon de commande en attente de validation.',
+            type: 'success'
+        });
+    };
 
     const columns = [
         {
@@ -125,10 +151,16 @@ export default function ProductsPage() {
                 description={`Supervision centralisée des ${productsData?.total ? formatNumber(productsData.total) : '...'} références disponibles sur la plateforme.`}
                 actions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={handleManageCategories}
+                            className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                        >
                             <Layers size={14} /> Gérer Catégories
                         </button>
-                        <button className="px-5 py-2.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-2xl font-black transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest">
+                        <button
+                            onClick={handleNewProduct}
+                            className="px-5 py-2.5 bg-[var(--primary)] hover:opacity-90 text-white rounded-2xl font-black transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest"
+                        >
                             <Plus size={18} /> Nouveau Produit
                         </button>
                     </div>
@@ -142,6 +174,7 @@ export default function ProductsPage() {
                     value={formatAmount(totalValue)}
                     icon={Box}
                     variant="info"
+                    index={0}
                     changeLabel="Évaluation actuelle"
                 />
                 <StatCard
@@ -149,6 +182,7 @@ export default function ProductsPage() {
                     value={formatNumber(lowStockCount)}
                     icon={AlertTriangle}
                     variant="warning"
+                    index={1}
                     change={-12}
                     changeLabel="vs hier"
                 />
@@ -157,6 +191,7 @@ export default function ProductsPage() {
                     value={formatNumber(productsData?.total || 0)}
                     icon={Package}
                     variant="default"
+                    index={2}
                     changeLabel="Articles distincts"
                 />
                 <StatCard
@@ -164,6 +199,7 @@ export default function ProductsPage() {
                     value="4.2x"
                     icon={RefreshCw}
                     variant="success"
+                    index={3}
                     changeLabel="Performance mensuelle"
                 />
             </div>
@@ -223,7 +259,10 @@ export default function ProductsPage() {
                     <h3 className="text-xl font-black text-white uppercase tracking-tight">Besoin d'un réapprovisionnement groupé?</h3>
                     <p className="text-white/70 text-sm font-medium mt-1">Générez un bon de commande automatique basé sur vos alertes de stock.</p>
                 </div>
-                <button className="relative z-10 px-6 py-3 bg-white text-[var(--primary)] rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap">
+                <button
+                    onClick={handleAutomation}
+                    className="relative z-10 px-6 py-3 bg-white text-[var(--primary)] rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+                >
                     Lancer l'automatisation <ArrowRight size={16} />
                 </button>
             </div>

@@ -20,6 +20,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useToast } from '../contexts/ToastContext';
 import type { ShopOverview, ShopStatus } from '../types/database';
 import { PageHeader, StatCard, StatusBadge, LoadingSpinner, EmptyState, ExpandableValue } from '../components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ============================================
 // COMPOSANT CARTE BOUTIQUE (Premium Grid)
@@ -27,19 +28,24 @@ import { PageHeader, StatCard, StatusBadge, LoadingSpinner, EmptyState, Expandab
 
 const ShopCard = ({
     shop,
+    index,
     onClick,
     onAction,
     formatAmount,
     formatNumber
 }: {
     shop: ShopOverview;
+    index: number;
     onClick: () => void;
     onAction: (id: string, status: ShopStatus) => void;
     formatAmount: (v: number) => string;
     formatNumber: (v: number) => string
 }) => {
     return (
-        <div
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.5) }}
             onClick={onClick}
             className="card-dashboard group cursor-pointer relative flex flex-col hover:-translate-y-2 hover:shadow-2xl transition-all duration-500 border-[var(--border-subtle)] bg-[var(--bg-card)]"
         >
@@ -139,7 +145,7 @@ const ShopCard = ({
                     <ArrowUpRight size={18} />
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -164,6 +170,14 @@ export default function ShopsPage() {
     const displayData = rawData.filter(shop =>
         filterActive === null || (shop.status === 'active' ? true : false) === filterActive
     );
+
+    const handleDeployShop = () => {
+        addToast({
+            title: 'Déploiement Boutique',
+            message: "L'assistant de configuration de nouveau terminal est en cours de maintenance.",
+            type: 'info'
+        });
+    };
 
     const handleAction = async (shopId: string, status: ShopStatus) => {
         const actionLabel = status === 'active' ? 'réactivée' : 'suspendue';
@@ -190,7 +204,10 @@ export default function ShopsPage() {
                 title="Réseau de Boutiques"
                 description={`Supervision centralisée des ${shopsData?.total ? formatNumber(shopsData.total) : '...'} terminaux de vente connectés au système.`}
                 actions={
-                    <button className="px-5 py-2.5 bg-[var(--primary)] hover:brightness-110 text-white rounded-2xl font-black transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest">
+                    <button
+                        onClick={handleDeployShop}
+                        className="px-5 py-2.5 bg-[var(--primary)] hover:brightness-110 text-white rounded-2xl font-black transition-all shadow-xl shadow-[var(--primary-glow)] flex items-center gap-2 active:scale-95 text-xs uppercase tracking-widest"
+                    >
                         <Store size={18} /> Déployer une Boutique
                     </button>
                 }
@@ -203,13 +220,15 @@ export default function ShopsPage() {
                     value={formatNumber(shopsData?.total || 0)}
                     icon={Store}
                     variant="info"
+                    index={0}
                     changeLabel="Terminaux installés"
                 />
                 <StatCard
                     label="État du Réseau"
-                    value={formatNumber(shopsData?.data.filter(s => s.is_active).length || 0)}
+                    value={formatNumber(shopsData?.data.filter(s => s.status === 'active').length || 0)}
                     icon={ShieldCheck}
                     variant="success"
+                    index={1}
                     changeLabel="Unités opérationnelles"
                 />
                 <StatCard
@@ -217,6 +236,7 @@ export default function ShopsPage() {
                     value={formatNumber(shopsData?.data.reduce((a, b) => a + (b.products_count || 0), 0) || 0)}
                     icon={Package}
                     variant="default"
+                    index={2}
                     changeLabel="Articles en rayon"
                 />
                 <StatCard
@@ -224,6 +244,7 @@ export default function ShopsPage() {
                     value="0"
                     icon={AlertCircle}
                     variant="info"
+                    index={3}
                     changeLabel="Dernières 24h"
                 />
             </div>
@@ -273,10 +294,11 @@ export default function ShopsPage() {
                     />
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 animate-fade-in">
-                        {displayData.map((shop: ShopOverview) => (
+                        {displayData.map((shop: ShopOverview, idx: number) => (
                             <ShopCard
                                 key={shop.shop_id}
                                 shop={shop}
+                                index={idx}
                                 formatAmount={formatAmount}
                                 formatNumber={formatNumber}
                                 onClick={() => navigate(`/shops/${shop.shop_id}`)}

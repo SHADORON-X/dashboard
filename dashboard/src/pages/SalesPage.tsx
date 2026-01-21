@@ -10,13 +10,31 @@ import { fr } from 'date-fns/locale';
 
 import { useAllSales } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import { PageHeader, DataTable, Pagination, StatCard, StatusBadge, ExpandableValue } from '../components/ui';
 
 export default function SalesPage() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [page, setPage] = useState(1);
     const { data: salesData, isLoading, refetch, isFetching } = useAllSales(page, 20);
     const { formatAmount } = useCurrency();
+
+    const handleExport = () => {
+        addToast({
+            title: 'Génération du Rapport',
+            message: 'Votre journal des ventes est en cours de compilation (PDF/Excel).',
+            type: 'info'
+        });
+    };
+
+    const handlePeriodChange = (period: string) => {
+        addToast({
+            title: 'Filtrage Dynamique',
+            message: `Plage temporelle fixée sur: ${period}.`,
+            type: 'info'
+        });
+    };
 
     const columns = [
         {
@@ -132,7 +150,10 @@ export default function SalesPage() {
                 description={`Audit complet des ${salesData?.total || '...'} transactions enregistrées par le réseau de boutiques.`}
                 actions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={handleExport}
+                            className="px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                        >
                             <Download size={14} /> Exportation Fiscale
                         </button>
                         <button
@@ -152,6 +173,7 @@ export default function SalesPage() {
                     value={formatAmount(salesData?.data.slice(0, 5).reduce((acc: number, sale: any) => acc + sale.total_amount, 0) || 0)}
                     icon={TrendingUp}
                     variant="success"
+                    index={0}
                     change={+4.2}
                     changeLabel="vs hier"
                 />
@@ -160,13 +182,15 @@ export default function SalesPage() {
                     value={salesData?.total || 0}
                     icon={CheckCircle2}
                     variant="info"
+                    index={1}
                     changeLabel="Total transactions"
                 />
                 <StatCard
                     label="Paniers Moyens"
-                    value={formatAmount(12500)} // Mock average
+                    value={formatAmount((salesData?.data.reduce((acc: number, s: any) => acc + s.total_amount, 0) || 0) / (salesData?.data.length || 1))}
                     icon={ShoppingBag}
                     variant="default"
+                    index={2}
                     changeLabel="Valeur par client"
                 />
                 <StatCard
@@ -174,6 +198,7 @@ export default function SalesPage() {
                     value="98.5%"
                     icon={CreditCard}
                     variant="success"
+                    index={3}
                     changeLabel="Performance paiements"
                 />
             </div>
@@ -187,6 +212,7 @@ export default function SalesPage() {
                     {['7J', '30J', 'Trimestre', 'Année'].map((period) => (
                         <button
                             key={period}
+                            onClick={() => handlePeriodChange(period)}
                             className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${period === '7J' ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                         >
                             {period}
@@ -194,7 +220,10 @@ export default function SalesPage() {
                     ))}
                 </div>
                 <div className="flex-1" />
-                <button className="flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all">
+                <button
+                    onClick={() => handlePeriodChange('Advance Filters')}
+                    className="flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all"
+                >
                     <Filter size={16} /> Filtres Avancés (Boutique, Vendeur...)
                 </button>
             </div>

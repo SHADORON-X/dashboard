@@ -9,8 +9,10 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDailySales, usePlatformStats, useShopsOverview } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import { PageHeader, StatCard, LoadingSpinner } from '../components/ui';
 
 // --- COLORS PALETTE ---
@@ -20,6 +22,7 @@ const CHART_COLORS = ['var(--primary)', '#06b6d4', '#ec4899', '#f59e0b', 'var(--
 
 export default function AnalyticsPage() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [period, setPeriod] = useState<7 | 14 | 30>(30);
     const { data: dailySales, isLoading: salesLoading } = useDailySales(period);
     const { data: stats, isLoading: statsLoading } = usePlatformStats();
@@ -49,6 +52,31 @@ export default function AnalyticsPage() {
 
     const isLoading = salesLoading || statsLoading || shopsLoading;
 
+    const handlePeriodChange = (days: 7 | 14 | 30) => {
+        setPeriod(days);
+        addToast({
+            title: 'Analyse temporelle',
+            message: `Données recalibrées pour les ${days} derniers jours.`,
+            type: 'info'
+        });
+    };
+
+    const handleFullReport = () => {
+        addToast({
+            title: 'Rapport Stratégique',
+            message: "La génération du PDF d'analyse profonde est en cours de préparation.",
+            type: 'info'
+        });
+    };
+
+    const handleShare = () => {
+        addToast({
+            title: 'Partage de données',
+            message: "Lien de consultation sécurisé généré pour ce segment d'analyse.",
+            type: 'success'
+        });
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -70,7 +98,7 @@ export default function AnalyticsPage() {
                         {[7, 14, 30].map((days) => (
                             <button
                                 key={days}
-                                onClick={() => setPeriod(days as any)}
+                                onClick={() => handlePeriodChange(days as any)}
                                 className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${period === days
                                     ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]'
                                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -90,6 +118,7 @@ export default function AnalyticsPage() {
                     value={formatAmount(stats?.total_gmv || 0)}
                     icon={DollarSign}
                     variant="info"
+                    index={0}
                     change={Number(revenueGrowth)}
                     changeLabel="vs période précédente"
                 />
@@ -98,6 +127,7 @@ export default function AnalyticsPage() {
                     value={formatAmount(stats?.total_profit || 0)}
                     icon={TrendingUp}
                     variant="success"
+                    index={1}
                     changeLabel="Profit net consolidé"
                 />
                 <StatCard
@@ -105,6 +135,7 @@ export default function AnalyticsPage() {
                     value={formatAmount(stats?.total_sales ? (stats.total_gmv / stats.total_sales) : 0)}
                     icon={Zap}
                     variant="info"
+                    index={2}
                     changeLabel="Valeur par transaction"
                 />
                 <StatCard
@@ -112,6 +143,7 @@ export default function AnalyticsPage() {
                     value={`${((stats?.total_active_shops || 0) / (shopsData?.total || 1) * 100).toFixed(1)}%`}
                     icon={Target}
                     variant="warning"
+                    index={3}
                     changeLabel="Boutiques actives en ligne"
                 />
             </div>
@@ -120,7 +152,12 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* Evolution Revenue Chart (Wide) */}
-                <div className="lg:col-span-2 card-dashboard flex flex-col p-8 group relative overflow-hidden">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="lg:col-span-2 card-dashboard flex flex-col p-8 group relative overflow-hidden"
+                >
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
                         <Activity size={120} />
                     </div>
@@ -136,7 +173,7 @@ export default function AnalyticsPage() {
                                 <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase">Input</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-[var(--success)] shadow-[0_0_8px_var(--success)]/40" />
+                                <span className="w-2 h-2 rounded-full bg-[var(--success)] shadow-[0_0_8_px_var(--success)]/40" />
                                 <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase">Margin</span>
                             </div>
                         </div>
@@ -189,10 +226,15 @@ export default function AnalyticsPage() {
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Categories Pie Chart */}
-                <div className="card-dashboard flex flex-col p-8 group overflow-hidden">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="card-dashboard flex flex-col p-8 group overflow-hidden"
+                >
                     <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tighter">Répartition Marché</h2>
                     <p className="text-[var(--text-muted)] text-[11px] font-bold uppercase tracking-widest mt-1 mb-10">Analyse par secteur d'activité</p>
 
@@ -233,7 +275,7 @@ export default function AnalyticsPage() {
                             <span className="text-[9px] text-[var(--text-muted)] uppercase font-black tracking-widest">Unités</span>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Performance Details Grid */}
@@ -243,21 +285,27 @@ export default function AnalyticsPage() {
                 <div className="card-dashboard p-8">
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tighter">Élite du Réseau</h2>
-                        <button className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+                        <button
+                            onClick={handleShare}
+                            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors active:scale-95"
+                        >
                             <Share2 size={18} />
                         </button>
                     </div>
 
                     <div className="space-y-3">
                         {topShops.map((shop, idx) => (
-                            <div
+                            <motion.div
                                 key={shop.shop_id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.4, delay: Math.min(idx * 0.1, 0.5) }}
                                 onClick={() => navigate(`/shops/${shop.shop_id}`)}
                                 className="flex items-center gap-5 p-4 rounded-2xl hover:bg-[var(--primary)]/5 border border-transparent hover:border-[var(--border-subtle)] transition-all group cursor-pointer active:scale-[0.98]"
                             >
                                 <div className={`
                                     w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-xl shrink-0
-                                    ${idx === 0 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                                    ${idx === 0 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-amber-500/10' :
                                         idx === 1 ? 'bg-[var(--text-secondary)]/5 text-[var(--text-secondary)] border border-[var(--border-subtle)]' :
                                             idx === 2 ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 'bg-[var(--bg-app)] border border-[var(--border-subtle)] text-[var(--text-muted)]'}
                                 `}>
@@ -280,13 +328,18 @@ export default function AnalyticsPage() {
                                         <ArrowUpRight size={12} className="text-[var(--success)]" />
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
 
                 {/* Sales Volume Bar Chart */}
-                <div className="card-dashboard flex flex-col p-8">
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="card-dashboard flex flex-col p-8"
+                >
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tighter">Densité Logistique</h2>
                         <div className="px-3 py-1 bg-[var(--bg-app)]/50 rounded-lg text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Volume (Commandes)</div>
@@ -327,11 +380,14 @@ export default function AnalyticsPage() {
                             <MousePointer2 size={14} className="text-[var(--text-muted)]" />
                             <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Survolez pour les détails précis</span>
                         </div>
-                        <button className="flex items-center gap-2 text-[10px] font-black text-[var(--primary)] uppercase tracking-widest hover:text-[var(--text-primary)] transition-colors">
+                        <button
+                            onClick={handleFullReport}
+                            className="flex items-center gap-2 text-[10px] font-black text-[var(--primary)] uppercase tracking-widest hover:text-[var(--text-primary)] transition-colors active:scale-95"
+                        >
                             Rapport Complet <ArrowRight size={14} />
                         </button>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );

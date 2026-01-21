@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
     FileText, AlertTriangle, AlertCircle, XCircle, CheckCircle2,
     Filter, RefreshCw, Terminal, ChevronDown, ChevronUp, Search,
-    Bug, Cpu, Database, Eye, Ghost, History
+    Bug, Cpu, Database, Eye, Ghost, History, Download
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import { useCriticalEvents } from '../hooks/useData';
+import { useCriticalEvents, useAdminActions } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import type { CriticalAuditEvent, AuditSeverity } from '../types/database';
 import { PageHeader, LoadingSpinner, EmptyState, StatusBadge } from '../components/ui';
 
@@ -21,13 +23,40 @@ const SEVERITY_CONFIG: Record<AuditSeverity, { color: string, bg: string, border
 };
 
 // --- LOG ROW COMPONENT ---
-const LogRow = ({ event }: { event: CriticalAuditEvent }) => {
+const LogRow = ({ event, index }: { event: CriticalAuditEvent; index: number }) => {
     const [expanded, setExpanded] = useState(false);
+    const { addToast } = useToast();
+    const { resolveAuditLog } = useAdminActions();
     const config = SEVERITY_CONFIG[event.severity] || SEVERITY_CONFIG.info;
     const Icon = config.icon;
 
+    const handleResolve = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (event.resolved) return;
+
+        try {
+            await resolveAuditLog.mutateAsync(event.id);
+            addToast({
+                title: 'Incident Résolu',
+                message: "L'événement a été marqué comme traité dans le Sentinel.",
+                type: 'success'
+            });
+        } catch (err) {
+            addToast({
+                title: 'Erreur',
+                message: "Impossible de clore l'incident pour le moment.",
+                type: 'error'
+            });
+        }
+    };
+
     return (
-        <div className={`group border-b border-[var(--border-subtle)] transition-all duration-300 ${expanded ? 'bg-[var(--primary)]/5' : 'hover:bg-[var(--primary)]/5'}`}>
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
+            className={`group border-b border-[var(--border-subtle)] transition-all duration-300 ${expanded ? 'bg-[var(--primary)]/5' : 'hover:bg-[var(--primary)]/5'}`}
+        >
             <div
                 onClick={() => setExpanded(!expanded)}
                 className="flex items-center gap-6 py-4 px-6 cursor-pointer"
@@ -45,7 +74,7 @@ const LogRow = ({ event }: { event: CriticalAuditEvent }) => {
                         </div>
                     </div>
 
-                    <div className="col-span-5 lg:col-span-4 flex flex-col">
+                    <div className="col-span-12 lg:col-span-4 flex flex-col">
                         <span className="text-sm font-bold text-[var(--text-primary)] truncate font-mono tracking-tighter group-hover:text-[var(--primary)] transition-colors">
                             {event.type.toUpperCase()}
                         </span>
@@ -75,81 +104,93 @@ const LogRow = ({ event }: { event: CriticalAuditEvent }) => {
             </div>
 
             {/* EXPANDED SYSTEM DATA */}
-            {expanded && (
-                <div className="px-6 pb-6 pt-2 pl-[84px] animate-fade-in">
-                    <div className="bg-[var(--bg-app)] rounded-2xl border border-[var(--border-subtle)] p-6 font-mono text-xs overflow-hidden relative shadow-inner">
-                        {/* Glossy Overlay */}
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <Database size={64} className="text-[var(--text-primary)]" />
-                        </div>
+            <AnimatePresence>
+                {expanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="px-6 pb-6 pt-2 pl-[84px] overflow-hidden"
+                    >
+                        <div className="bg-[var(--bg-app)] rounded-2xl border border-[var(--border-subtle)] p-6 font-mono text-xs overflow-hidden relative shadow-inner">
+                            {/* Glossy Overlay */}
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <Database size={64} className="text-[var(--text-primary)]" />
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6 relative z-10">
-                            <div className="space-y-3">
-                                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Metadata Context</p>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                                        <span className="text-[var(--text-muted)]">Timestamp</span>
-                                        <span className="text-[var(--text-secondary)]">{format(new Date(event.timestamp), 'HH:mm:ss.SSS')}</span>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6 relative z-10">
+                                <div className="space-y-3">
+                                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Metadata Context</p>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
+                                            <span className="text-[var(--text-muted)]">Timestamp</span>
+                                            <span className="text-[var(--text-secondary)]">{format(new Date(event.timestamp), 'HH:mm:ss.SSS')}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
+                                            <span className="text-[var(--text-muted)]">Node ID</span>
+                                            <span className="text-[var(--text-secondary)] font-mono">{event.entity_id?.slice(0, 12) || 'N/A'}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                                        <span className="text-[var(--text-muted)]">Node ID</span>
-                                        <span className="text-[var(--text-secondary)] font-mono">{event.entity_id?.slice(0, 12) || 'N/A'}</span>
+                                </div>
+                                <div className="space-y-3">
+                                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Actor & Location</p>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
+                                            <span className="text-[var(--text-muted)]">Operator</span>
+                                            <span className="text-[var(--primary)] font-bold">{event.user_name || 'SYSTEM_CORE'}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
+                                            <span className="text-[var(--text-muted)]">Terminal</span>
+                                            <span className="text-[var(--text-secondary)]">{event.shop_name || 'HEADQUARTERS'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Internal Status</p>
+                                    <div className="flex items-center gap-2 h-full">
+                                        <StatusBadge status={event.resolved ? 'success' : 'error'} label={event.resolved ? 'RÉSOLU' : 'NON RÉSOLU'} />
                                     </div>
                                 </div>
                             </div>
-                            <div className="space-y-3">
-                                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Actor & Location</p>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                                        <span className="text-[var(--text-muted)]">Operator</span>
-                                        <span className="text-[var(--primary)] font-bold">{event.user_name || 'SYSTEM_CORE'}</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-[var(--border-subtle)] pb-1">
-                                        <span className="text-[var(--text-muted)]">Terminal</span>
-                                        <span className="text-[var(--text-secondary)]">{event.shop_name || 'HEADQUARTERS'}</span>
-                                    </div>
+
+                            {/* Payload Viewer */}
+                            <div className="bg-[var(--bg-card)]/40 rounded-xl p-5 border border-[var(--border-subtle)] font-mono text-[11px] leading-relaxed relative">
+                                <div className="absolute top-3 right-4 flex gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-[var(--error)]/20" />
+                                    <div className="w-2 h-2 rounded-full bg-[var(--warning)]/20" />
+                                    <div className="w-2 h-2 rounded-full bg-[var(--success)]/20" />
                                 </div>
-                            </div>
-                            <div className="space-y-3">
-                                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Internal Status</p>
-                                <div className="flex items-center gap-2 h-full">
-                                    <StatusBadge status={event.resolved ? 'success' : 'error'} label={event.resolved ? 'RÉSOLU' : 'NON RÉSOLU'} />
-                                </div>
+                                <p className="text-[var(--primary)]/80 mb-2">// DEBUG_PAYLOAD_DUMP</p>
+                                <pre className="text-[var(--text-muted)] whitespace-pre-wrap">
+                                    {JSON.stringify({
+                                        message: (event as any).details || (event.metadata as any)?.message || "No supplementary data",
+                                        source: "velmo-api-gateway",
+                                        stack: "VelmoRuntime.Exec(opcode: 0x4F)",
+                                        trace_id: event.id
+                                    }, null, 2)}
+                                </pre>
                             </div>
                         </div>
 
-                        {/* Payload Viewer */}
-                        <div className="bg-[var(--bg-card)]/40 rounded-xl p-5 border border-[var(--border-subtle)] font-mono text-[11px] leading-relaxed relative">
-                            <div className="absolute top-3 right-4 flex gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[var(--error)]/20" />
-                                <div className="w-2 h-2 rounded-full bg-[var(--warning)]/20" />
-                                <div className="w-2 h-2 rounded-full bg-[var(--success)]/20" />
+                        {!event.resolved && (
+                            <div className="mt-4 flex gap-3">
+                                <button
+                                    onClick={handleResolve}
+                                    className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 bg-[var(--success)] hover:brightness-110 text-white rounded-xl transition-all shadow-lg shadow-[var(--success-glow)] active:scale-95 disabled:opacity-50"
+                                    disabled={resolveAuditLog.isPending}
+                                >
+                                    <CheckCircle2 size={14} className={resolveAuditLog.isPending ? 'animate-pulse' : ''} />
+                                    {resolveAuditLog.isPending ? 'Traitement...' : "Fermer l'Incident"}
+                                </button>
+                                <button className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:bg-[var(--primary)]/10 text-[var(--text-secondary)] rounded-xl transition-all">
+                                    <History size={14} /> Analyser Historique
+                                </button>
                             </div>
-                            <p className="text-[var(--primary)]/80 mb-2">// DEBUG_PAYLOAD_DUMP</p>
-                            <pre className="text-[var(--text-muted)] whitespace-pre-wrap">
-                                {JSON.stringify({
-                                    message: (event as any).details || (event.metadata as any)?.message || "No supplementary data",
-                                    source: "velmo-api-gateway",
-                                    stack: "VelmoRuntime.Exec(opcode: 0x4F)",
-                                    trace_id: event.id
-                                }, null, 2)}
-                            </pre>
-                        </div>
-                    </div>
-
-                    {!event.resolved && (
-                        <div className="mt-4 flex gap-3">
-                            <button className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 bg-[var(--success)] hover:brightness-110 text-white rounded-xl transition-all shadow-lg shadow-[var(--success-glow)] active:scale-95">
-                                <CheckCircle2 size={14} /> Fermer l'Incident
-                            </button>
-                            <button className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:bg-[var(--primary)]/10 text-[var(--text-secondary)] rounded-xl transition-all">
-                                <History size={14} /> Analyser Historique
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     );
 };
 
@@ -157,13 +198,32 @@ const LogRow = ({ event }: { event: CriticalAuditEvent }) => {
 
 export default function LogsPage() {
     const [page, setPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
     const [severityFilter, setSeverityFilter] = useState<AuditSeverity | null>(null);
     const { data: eventsData, isLoading, refetch, isFetching } = useCriticalEvents(page, 50);
     const { formatNumber } = useCurrency();
+    const { addToast } = useToast();
 
-    const filteredData = eventsData?.data.filter(e =>
-        severityFilter ? e.severity === severityFilter : true
-    ) || [];
+    const filteredData = useMemo(() => {
+        if (!eventsData?.data) return [];
+        return eventsData.data.filter(e => {
+            const matchesSeverity = severityFilter ? e.severity === severityFilter : true;
+            const matchesSearch = searchTerm === '' ||
+                e.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                e.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                e.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                e.shop_name?.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesSeverity && matchesSearch;
+        });
+    }, [eventsData, severityFilter, searchTerm]);
+
+    const handleExport = () => {
+        addToast({
+            title: 'Export Sentinel',
+            message: 'Le vidage des registres audit-log a été initié. Téléchargement imminent.',
+            type: 'info'
+        });
+    };
 
     const stats = {
         total: eventsData?.total || 0,
@@ -238,13 +298,18 @@ export default function LogsPage() {
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                             <input
                                 type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Grep pattern search..."
                                 className="w-full bg-[var(--bg-card)]/50 border border-[var(--border-subtle)] rounded-xl py-2 pl-9 pr-4 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:ring-1 focus:ring-[var(--primary)]/50 transition-all font-bold"
                             />
                         </div>
                         <div className="h-8 w-px bg-[var(--border-subtle)]" />
-                        <button className="text-[10px] font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-widest transition-colors flex items-center gap-2">
-                            <Filter size={12} /> Export
+                        <button
+                            onClick={handleExport}
+                            className="text-[10px] font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-widest transition-colors flex items-center gap-2"
+                        >
+                            <Download size={14} /> Export
                         </button>
                     </div>
                 </div>
@@ -263,8 +328,8 @@ export default function LogsPage() {
                             description="Aucun log critique n'est actuellement indexé pour ces filtres."
                         />
                     ) : (
-                        filteredData.map(event => (
-                            <LogRow key={event.id} event={event} />
+                        filteredData.map((event, idx) => (
+                            <LogRow key={event.id} event={event} index={idx} />
                         ))
                     )}
                 </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus, Search } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ============================================
 // STAT CARD (Enhanced Premium)
@@ -14,6 +15,7 @@ interface StatCardProps {
     changeLabel?: string;
     variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'indigo' | 'violet';
     loading?: boolean;
+    index?: number;
 }
 
 export function StatCard({
@@ -23,17 +25,18 @@ export function StatCard({
     change,
     changeLabel,
     variant = 'default',
-    loading = false
+    loading = false,
+    index = 0
 }: StatCardProps) {
     const [isExpanded, setIsExpanded] = React.useState(false);
-    const variantStyles: Record<string, { bg: string, text: string, border: string }> = {
-        default: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20' },
-        success: { bg: 'bg-[var(--success)]/10', text: 'text-[var(--success)]', border: 'border-[var(--success)]/20' },
-        warning: { bg: 'bg-[var(--warning)]/10', text: 'text-[var(--warning)]', border: 'border-[var(--warning)]/20' },
-        error: { bg: 'bg-[var(--error)]/10', text: 'text-[var(--error)]', border: 'border-[var(--error)]/20' },
-        info: { bg: 'bg-[var(--info)]/10', text: 'text-[var(--info)]', border: 'border-[var(--info)]/20' },
-        indigo: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20' },
-        violet: { bg: 'bg-violet-500/10', text: 'text-violet-400', border: 'border-violet-500/20' },
+    const variantStyles: Record<string, { bg: string, text: string, border: string, glow: string }> = {
+        default: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]', border: 'border-[var(--primary)]/20', glow: 'shadow-[var(--primary-glow)]' },
+        success: { bg: 'bg-[var(--success)]/10', text: 'text-[var(--success)]', border: 'border-[var(--success)]/20', glow: 'shadow-[var(--success-glow)]' },
+        warning: { bg: 'bg-[var(--warning)]/10', text: 'text-[var(--warning)]', border: 'border-[var(--warning)]/20', glow: 'shadow-[var(--warning-glow)]' },
+        error: { bg: 'bg-[var(--error)]/10', text: 'text-[var(--error)]', border: 'border-[var(--error)]/20', glow: 'shadow-[var(--error-glow)]' },
+        info: { bg: 'bg-[var(--info)]/10', text: 'text-[var(--info)]', border: 'border-[var(--info)]/20', glow: 'shadow-[var(--info-glow)]' },
+        indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/20', glow: 'shadow-indigo-500/20' },
+        violet: { bg: 'bg-violet-500/10', text: 'text-violet-400', border: 'border-violet-500/20', glow: 'shadow-violet-500/20' },
     };
 
     const style = variantStyles[variant] || variantStyles.default;
@@ -52,31 +55,45 @@ export function StatCard({
     }
 
     return (
-        <div className="card-dashboard group relative overflow-hidden transition-all duration-500">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ y: -5, scale: 1.02 }}
+            className="card-dashboard group relative overflow-hidden transition-all duration-500"
+        >
             {/* Background Glow Effect */}
             <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 ${style.bg}`} />
 
             <div className="flex items-center justify-between relative z-10">
                 <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors uppercase tracking-wider">{label}</span>
                 {Icon && (
-                    <div className={`p-2.5 rounded-xl border ${style.border} ${style.bg} shadow-lg shadow-black/20 group-hover:scale-110 transition-transform duration-500`}>
+                    <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className={`p-2.5 rounded-xl border ${style.border} ${style.bg} shadow-lg shadow-black/20 transition-all duration-500`}
+                    >
                         <Icon size={20} className={style.text} />
-                    </div>
+                    </motion.div>
                 )}
             </div>
 
             <div className="mt-4 relative z-10 min-w-0">
-                <h3
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className={`font-black tracking-tight text-[var(--text-primary)] transition-all duration-300 cursor-pointer
-                        ${isExpanded ? '' : 'truncate whitespace-nowrap'}
-                        ${String(value).length > 15 ? 'text-xl sm:text-2xl' :
-                            String(value).length > 12 ? 'text-2xl sm:text-3xl' :
-                                'text-3xl sm:text-4xl'}`}
-                    title={isExpanded ? "Cliquez pour réduire" : String(value)}
-                >
-                    {value}
-                </h3>
+                <AnimatePresence mode="wait">
+                    <motion.h3
+                        key={String(value) + isExpanded}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className={`font-black tracking-tight text-[var(--text-primary)] transition-all duration-300 cursor-pointer
+                            ${isExpanded ? '' : 'truncate whitespace-nowrap'}
+                            ${String(value).length > 15 ? 'text-xl sm:text-2xl' :
+                                String(value).length > 12 ? 'text-2xl sm:text-3xl' :
+                                    'text-3xl sm:text-4xl'}`}
+                        title={isExpanded ? "Cliquez pour réduire" : String(value)}
+                    >
+                        {value}
+                    </motion.h3>
+                </AnimatePresence>
 
                 {change !== undefined && (
                     <div className="flex items-center gap-1.5 mt-2">
@@ -93,7 +110,7 @@ export function StatCard({
                     </div>
                 )}
             </div>
-        </div>
+        </motion.div>
     );
 }
 

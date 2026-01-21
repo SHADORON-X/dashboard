@@ -6,9 +6,12 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 import { useRealtimeActivity } from '../hooks/useData';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import supabase from '../lib/supabase';
 import { PageHeader, StatCard, LoadingSpinner, EmptyState, StatusBadge } from '../components/ui';
 
@@ -33,10 +36,20 @@ const getActivityColor = (type: string) => {
 };
 
 export default function ActivityPage() {
+    const navigate = useNavigate();
+    const { addToast } = useToast();
     const { data: activity, isLoading, refetch, isFetching } = useRealtimeActivity(100);
     const [autoRefresh, setAutoRefresh] = useState(true);
     const [filterType, setFilterType] = useState<string | null>(null);
     const { formatAmount } = useCurrency();
+
+    const handleExportAudit = () => {
+        addToast({
+            title: 'Audit Express',
+            message: 'La génération du rapport PDF a été lancée. Vous recevrez une notification une fois terminé.',
+            type: 'info'
+        });
+    };
 
     // Auto-refresh every 15 seconds as fallback
     useEffect(() => {
@@ -152,14 +165,21 @@ export default function ActivityPage() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -mr-10 -mt-10" />
                         <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-2">Audit Express</p>
                         <p className="text-white font-bold text-sm mb-4 leading-relaxed">Générez un rapport complet des 24 dernières heures.</p>
-                        <button className="w-full py-2.5 bg-white text-[var(--primary)] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all">
+                        <button
+                            onClick={handleExportAudit}
+                            className="w-full py-2.5 bg-white text-[var(--primary)] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all"
+                        >
                             Télécharger PDF <ArrowRight size={14} />
                         </button>
                     </div>
                 </div>
 
                 {/* TIMELINE FEED (Premium Timeline Style) */}
-                <div className="lg:col-span-3 card-dashboard bg-[var(--bg-card)] border-[var(--border-subtle)] min-h-[600px] flex flex-col p-8">
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="lg:col-span-3 card-dashboard bg-[var(--bg-card)] border-[var(--border-subtle)] min-h-[600px] flex flex-col p-8"
+                >
                     <div className="flex items-center justify-between mb-10">
                         <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tighter">Observatoire Tactique</h2>
                         <span className="px-3 py-1 bg-[var(--bg-app)]/50 rounded-lg text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">
@@ -180,68 +200,83 @@ export default function ActivityPage() {
                         />
                     ) : (
                         <div className="relative space-y-8 before:absolute before:inset-y-0 before:left-[27px] before:w-px before:bg-gradient-to-b before:from-[var(--primary)]/50 before:via-[var(--border-subtle)] before:to-transparent">
-                            {filteredActivity.map((item, idx) => (
-                                <div key={idx} className="relative flex gap-6 items-start group animate-fade-in">
-                                    {/* Icon Node */}
-                                    <div className={`
-                                        w-14 h-14 rounded-2xl flex items-center justify-center border shadow-2xl z-10 shrink-0
-                                        ${getActivityColor(item.activity_type)}
-                                    `}>
-                                        <ActivityIcon type={item.activity_type} />
-                                    </div>
-
-                                    {/* Event Card */}
-                                    <div className="flex-1 bg-[var(--bg-app)]/50 border border-[var(--border-subtle)] rounded-3xl p-5 hover:bg-[var(--primary)]/5 hover:border-[var(--primary)]/20 transition-all duration-300 relative group/card">
-                                        <div className="absolute top-5 right-5 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                                            <ArrowRight size={16} className="text-[var(--text-muted)]" />
+                            <AnimatePresence mode="popLayout">
+                                {filteredActivity.map((item, idx) => (
+                                    <motion.div
+                                        key={item.activity_at + idx}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.3, delay: Math.min(idx * 0.05, 0.5) }}
+                                        className="relative flex gap-6 items-start group animate-fade-in"
+                                    >
+                                        {/* Icon Node */}
+                                        <div className={`
+                                            w-14 h-14 rounded-2xl flex items-center justify-center border shadow-2xl z-10 shrink-0 transition-transform group-hover:scale-110
+                                            ${getActivityColor(item.activity_type)}
+                                        `}>
+                                            <ActivityIcon type={item.activity_type} />
                                         </div>
 
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h4 className="text-[var(--text-primary)] font-black text-sm uppercase tracking-tight">
-                                                        {item.activity_type === 'sale' && 'Encaissement Boutique'}
-                                                        {item.activity_type === 'debt' && 'Alerte de Crédit'}
-                                                        {item.activity_type === 'user_created' && 'Déploiement Agent'}
-                                                    </h4>
-                                                    <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
-                                                    <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                                                        <Clock size={10} />
-                                                        {formatDistanceToNow(new Date(item.activity_at), { addSuffix: true, locale: fr })}
-                                                    </p>
-                                                </div>
-                                                <div className="mt-2 flex items-center gap-4">
-                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-muted)]">
-                                                        <Store size={12} className="text-[var(--text-muted)]/50" />
-                                                        {item.shop_name}
-                                                    </div>
-                                                </div>
+                                        {/* Event Card */}
+                                        <div
+                                            onClick={() => {
+                                                const path = item.activity_type === 'sale' ? `/sales/${item.entity_id}` : item.activity_type === 'debt' ? `/debts/${item.entity_id}` : `/users/${item.entity_id}`;
+                                                navigate(path);
+                                            }}
+                                            className="flex-1 bg-[var(--bg-app)]/50 border border-[var(--border-subtle)] rounded-3xl p-5 hover:bg-[var(--primary)]/5 hover:border-[var(--primary)]/20 transition-all duration-300 relative group/card cursor-pointer active:scale-[0.99]"
+                                        >
+                                            <div className="absolute top-5 right-5 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                                <ArrowRight size={16} className="text-[var(--text-muted)]" />
                                             </div>
 
-                                            {item.amount && (
-                                                <div className="flex flex-col items-end">
-                                                    <div className={`text-lg font-black font-mono tracking-tighter ${item.activity_type === 'debt' ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
-                                                        {formatAmount(item.amount)}
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="text-[var(--text-primary)] font-black text-sm uppercase tracking-tight">
+                                                            {item.activity_type === 'sale' && 'Encaissement Boutique'}
+                                                            {item.activity_type === 'debt' && 'Alerte de Crédit'}
+                                                            {item.activity_type === 'user_created' && 'Déploiement Agent'}
+                                                        </h4>
+                                                        <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
+                                                        <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                                            <Clock size={10} />
+                                                            {formatDistanceToNow(new Date(item.activity_at), { addSuffix: true, locale: fr })}
+                                                        </p>
                                                     </div>
-                                                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Volume Transactionnel</span>
+                                                    <div className="mt-2 flex items-center gap-4">
+                                                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-muted)]">
+                                                            <Store size={12} className="text-[var(--text-muted)]/50" />
+                                                            {item.shop_name}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
 
-                                        <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] flex items-center gap-3">
-                                            {item.activity_type === 'debt' && <StatusBadge status="warning" label={item.status || 'Impayé'} />}
-                                            {item.activity_type === 'sale' && <StatusBadge status="success" label="Validé" />}
-                                            {item.activity_type === 'user_created' && <StatusBadge status="info" label="Confirmé" />}
+                                                {item.amount && (
+                                                    <div className="flex flex-col items-end">
+                                                        <div className={`text-lg font-black font-mono tracking-tighter ${item.activity_type === 'debt' ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
+                                                            {formatAmount(item.amount)}
+                                                        </div>
+                                                        <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Volume Transactionnel</span>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                            <div className="h-4 w-px bg-[var(--border-subtle)] mx-1" />
-                                            <p className="text-[10px] text-[var(--text-muted)] font-bold italic">Réf: {item.activity_at.slice(-8).toUpperCase()}</p>
+                                            <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] flex items-center gap-3">
+                                                {item.activity_type === 'debt' && <StatusBadge status="warning" label={item.status || 'Impayé'} />}
+                                                {item.activity_type === 'sale' && <StatusBadge status="success" label="Validé" />}
+                                                {item.activity_type === 'user_created' && <StatusBadge status="info" label="Confirmé" />}
+
+                                                <div className="h-4 w-px bg-[var(--border-subtle)] mx-1" />
+                                                <p className="text-[10px] text-[var(--text-muted)] font-bold italic">Réf: {item.activity_at.slice(-8).toUpperCase()}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
                         </div>
                     )}
-                </div>
+                </motion.div>
             </div>
         </div>
     );

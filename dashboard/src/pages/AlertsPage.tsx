@@ -6,10 +6,12 @@ import {
     Activity, ArrowUpRight, ShieldAlert, RefreshCw,
     Phone, Store
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useStockAlerts, useSilentShops, useCriticalEvents } from '../hooks/useData';
 import type { StockAlert } from '../types/database';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from '../contexts/ToastContext';
 import { PageHeader, StatCard, LoadingSpinner, EmptyState } from '../components/ui';
 
 // --- COMPONENTS ---
@@ -42,11 +44,14 @@ const StockProgressBar = ({ current, threshold, formatNumber }: { current: numbe
     );
 }
 
-const AlertCard = ({ alert, onClick, formatNumber }: { alert: StockAlert, onClick: () => void, formatNumber: (v: number) => string }) => {
+const AlertCard = ({ alert, index, onClick, formatNumber }: { alert: StockAlert, index: number, onClick: () => void, formatNumber: (v: number) => string }) => {
     const isCritical = alert.current_stock <= 0;
 
     return (
-        <div
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.4) }}
             onClick={onClick}
             className={`
                 group relative card-dashboard p-6 flex flex-col hover:-translate-y-2 hover:shadow-2xl transition-all duration-500 cursor-pointer
@@ -109,7 +114,7 @@ const AlertCard = ({ alert, onClick, formatNumber }: { alert: StockAlert, onClic
                 </div>
                 <ArrowUpRight size={16} className="text-[var(--text-muted)] group-hover:text-[var(--primary)] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -117,6 +122,7 @@ const AlertCard = ({ alert, onClick, formatNumber }: { alert: StockAlert, onClic
 
 export default function AlertsPage() {
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [page] = useState(1);
     const { data: alertsData, isLoading: stockLoading, refetch: refetchStock, isFetching: stockFetching } = useStockAlerts(page, 100);
     const { data: silentShops, isLoading: silentLoading } = useSilentShops();
@@ -140,6 +146,15 @@ export default function AlertsPage() {
         return true;
     }) || [];
 
+    const handleFilterChange = (val: typeof filter) => {
+        setFilter(val);
+        addToast({
+            title: 'Filtre appliqué',
+            message: `Affichage des alertes: ${val === 'all' ? 'Toutes' : val === 'critical' ? 'Ruptures' : 'Seuils'}.`,
+            type: 'info'
+        });
+    };
+
     return (
         <div className="space-y-10 pb-20 animate-fade-in">
 
@@ -162,81 +177,98 @@ export default function AlertsPage() {
             {(silentCount > 0 || (criticalEvents?.total || 0) > 0) && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Silent Shops Alert */}
-                    {silentCount > 0 && (
-                        <div className="bg-[var(--warning)]/10 border border-[var(--warning)]/20 rounded-3xl p-6 flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-[var(--warning)] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[var(--warning)]/20">
-                                <Activity size={24} className="animate-pulse" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-black text-[var(--warning)] uppercase tracking-widest">Boutiques Silencieuses</h3>
-                                <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
-                                    <span className="text-[var(--text-primary)] font-bold">{formatNumber(silentCount)} boutiques</span> n'ont pas synchronisé de données depuis plus de 24 heures. Risque de déconnexion ou panne de terminal.
-                                </p>
-                                <div className="mt-4 flex gap-2">
-                                    <button
-                                        onClick={() => navigate('/shops?status=silent')}
-                                        className="px-3 py-1.5 bg-[var(--warning)] text-[10px] font-black uppercase text-white rounded-lg hover:brightness-110 transition-all"
-                                    >
-                                        Inspecter les boutiques
-                                    </button>
+                    <AnimatePresence>
+                        {silentCount > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="bg-[var(--warning)]/10 border border-[var(--warning)]/20 rounded-3xl p-6 flex items-start gap-4"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-[var(--warning)] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[var(--warning)]/20">
+                                    <Activity size={24} className="animate-pulse" />
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                                <div className="flex-1">
+                                    <h3 className="text-sm font-black text-[var(--warning)] uppercase tracking-widest">Boutiques Silencieuses</h3>
+                                    <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                                        <span className="text-[var(--text-primary)] font-bold">{formatNumber(silentCount)} boutiques</span> n'ont pas synchronisé de données depuis plus de 24 heures. Risque de déconnexion ou panne de terminal.
+                                    </p>
+                                    <div className="mt-4 flex gap-2">
+                                        <button
+                                            onClick={() => navigate('/shops?status=silent')}
+                                            className="px-3 py-1.5 bg-[var(--warning)] text-[10px] font-black uppercase text-white rounded-lg hover:brightness-110 transition-all shadow-lg active:scale-95"
+                                        >
+                                            Inspecter les boutiques
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Sentinel Critical Events Alert */}
-                    {(criticalEvents?.total || 0) > 0 && (
-                        <div className="bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-3xl p-6 flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-[var(--error)] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[var(--error)]/20">
-                                <ShieldAlert size={24} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-black text-[var(--error)] opacity-80 uppercase tracking-widest">Sentinel : Alertes Sécurité</h3>
-                                <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
-                                    Le système a détecté <span className="text-[var(--text-primary)] font-bold">{formatNumber(criticalEvents?.total || 0)} incidents critiques</span> nécessitant une revue immédiate.
-                                </p>
-                                <div className="mt-4 flex gap-2">
-                                    <button
-                                        onClick={() => navigate('/logs?severity=critical')}
-                                        className="px-3 py-1.5 bg-[var(--error)] text-[10px] font-black uppercase text-white rounded-lg hover:brightness-110 transition-all"
-                                    >
-                                        Ouvrir le journal Sentinel
-                                    </button>
+                    <AnimatePresence>
+                        {(criticalEvents?.total || 0) > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-3xl p-6 flex items-start gap-4"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-[var(--error)] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[var(--error)]/20">
+                                    <ShieldAlert size={24} />
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                                <div className="flex-1">
+                                    <h3 className="text-sm font-black text-[var(--error)] opacity-80 uppercase tracking-widest">Sentinel : Alertes Sécurité</h3>
+                                    <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                                        Le système a détecté <span className="text-[var(--text-primary)] font-bold">{formatNumber(criticalEvents?.total || 0)} incidents critiques</span> nécessitant une revue immédiate.
+                                    </p>
+                                    <div className="mt-4 flex gap-2">
+                                        <button
+                                            onClick={() => navigate('/logs?severity=critical')}
+                                            className="px-3 py-1.5 bg-[var(--error)] text-[10px] font-black uppercase text-white rounded-lg hover:brightness-110 transition-all shadow-lg active:scale-95"
+                                        >
+                                            Ouvrir le journal Sentinel
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             )}
 
             {/* Summary Filter Cards (Inventory) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                <div onClick={() => setFilter('all')} className="cursor-pointer">
+                <div onClick={() => handleFilterChange('all')} className="cursor-pointer">
                     <StatCard
                         label="Flux Inventaire"
                         value={formatNumber(alertsData?.total || 0)}
                         icon={Filter}
                         variant="info"
+                        index={0}
                         loading={isLoading}
                         changeLabel="Total des alertes stock"
                     />
                 </div>
-                <div onClick={() => setFilter('critical')} className="cursor-pointer">
+                <div onClick={() => handleFilterChange('critical')} className="cursor-pointer">
                     <StatCard
                         label="Ruptures Totales"
                         value={formatNumber(criticalCount)}
                         icon={XCircle}
                         variant="error"
+                        index={1}
                         loading={isLoading}
                         changeLabel="Urgence maximale"
                     />
                 </div>
-                <div onClick={() => setFilter('warning')} className="cursor-pointer">
+                <div onClick={() => handleFilterChange('warning')} className="cursor-pointer">
                     <StatCard
                         label="Seuils Critiques"
                         value={formatNumber(warningCount)}
                         icon={Zap}
                         variant="warning"
+                        index={2}
                         loading={isLoading}
                         changeLabel="Réapprovisionnement requis"
                     />
@@ -261,7 +293,7 @@ export default function AlertsPage() {
                     ].map((f) => (
                         <button
                             key={f.val}
-                            onClick={() => setFilter(f.val as any)}
+                            onClick={() => handleFilterChange(f.val as any)}
                             className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${filter === f.val ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                         >
                             {f.label}
@@ -284,10 +316,11 @@ export default function AlertsPage() {
                 />
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
-                    {displayData.map((alert) => (
+                    {displayData.map((alert, idx) => (
                         <AlertCard
                             key={`${alert.shop_id}-${alert.product_id}`}
                             alert={alert}
+                            index={idx}
                             formatNumber={formatNumber}
                             onClick={() => navigate(`/shops/${alert.shop_id}`)}
                         />
