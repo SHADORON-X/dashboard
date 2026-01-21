@@ -81,6 +81,17 @@ export interface Shop {
     synced_at: string | null;
     created_at: string;
     updated_at: string;
+    // Online Store Features
+    slug: string | null;
+    is_public: boolean;
+    location: string | null;
+    whatsapp: string | null;
+    opening_hours: string | null;
+    is_verified: boolean;
+    orders_count: number;
+    logo_url: string | null;
+    cover_url: string | null;
+    description: string | null;
 }
 
 export interface Product {
@@ -247,6 +258,42 @@ export interface VelmoAdmin {
     updated_at: string;
 }
 
+export type CustomerOrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'shipped' | 'delivered' | 'cancelled';
+export type DeliveryMethod = 'pickup' | 'delivery';
+
+export interface CustomerOrder {
+    id: string;
+    shop_id: string;
+    customer_name: string;
+    customer_phone: string;
+    customer_address: string | null;
+    items: Json;
+    total_amount: number;
+    delivery_method: DeliveryMethod;
+    order_note: string | null;
+    status: CustomerOrderStatus;
+    created_at: string;
+    updated_at: string;
+    confirmed_at: string | null;
+    delivered_at: string | null;
+    // Joined fields
+    shop_name?: string;
+}
+
+export interface OrderNotification {
+    id: string;
+    shop_id: string;
+    order_id: string | null;
+    user_id: string;
+    type: 'new_order' | 'order_confirmed' | 'order_cancelled' | 'low_stock' | 'out_of_stock';
+    title: string;
+    body: string;
+    data: Json;
+    is_read: boolean;
+    read_at: string | null;
+    created_at: string;
+}
+
 // Views
 export interface ShopOverview {
     shop_id: string;
@@ -401,6 +448,16 @@ export interface Database {
                     role?: 'super_admin' | 'admin' | 'viewer';
                     created_at?: string;
                 };
+            };
+            customer_orders: {
+                Row: CustomerOrder;
+                Insert: Partial<CustomerOrder>;
+                Update: Partial<CustomerOrder>;
+            };
+            order_notifications: {
+                Row: OrderNotification;
+                Insert: Partial<OrderNotification>;
+                Update: Partial<OrderNotification>;
             };
         };
         Views: {

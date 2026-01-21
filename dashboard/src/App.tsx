@@ -25,6 +25,7 @@ import SaleDetailPage from './pages/SaleDetailPage';
 import DebtsPage from './pages/DebtsPage';
 import DebtDetailPage from './pages/DebtDetailPage';
 import SettingsPage from './pages/SettingsPage';
+import OnlineServicesPage from './pages/OnlineServicesPage';
 
 // ============================================
 // QUERY CLIENT CONFIG
@@ -122,6 +123,7 @@ function AppRoutes() {
         <Route path="/sales/:saleId" element={<SaleDetailPage />} />
         <Route path="/debts" element={<DebtsPage />} />
         <Route path="/debts/:debtId" element={<DebtDetailPage />} />
+        <Route path="/services" element={<OnlineServicesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

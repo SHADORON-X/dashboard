@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Store, Activity, FileText, BarChart2,
     AlertTriangle, Settings, Search, Bell, LogOut, ChevronDown,
     Menu, X, Users, Package, ShoppingBag, FileWarning,
-    Sun, Moon, Monitor
+    Sun, Moon, Monitor, Globe
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -24,6 +24,7 @@ const NAV_ITEMS = [
     { path: '/products', label: 'Produits Global', icon: Package, section: 'Gestion' },
     { path: '/sales', label: 'Ventes', icon: ShoppingBag, section: 'Finance' },
     { path: '/debts', label: 'Dettes & Crédits', icon: FileWarning, section: 'Finance' },
+    { path: '/services', label: 'Services Digitaux', icon: Globe, section: 'Online' },
     { path: '/analytics', label: 'Analytics', icon: BarChart2, section: 'Monitoring' },
     { path: '/activity', label: 'Activité Live', icon: Activity, section: 'Monitoring' },
     { path: '/alerts', label: 'Alertes Stock', icon: AlertTriangle, section: 'Monitoring' },

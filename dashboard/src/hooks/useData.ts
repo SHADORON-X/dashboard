@@ -11,7 +11,9 @@ import type {
     Sale,
     User,
     UserStatus,
-    ShopStatus
+    ShopStatus,
+    CustomerOrder,
+    Shop as DatabaseShop
 } from '../types/database';
 
 // ============================================
@@ -36,6 +38,8 @@ export const queryKeys = {
     productDetails: (productId: string) => ['productDetails', productId] as const,
     saleDetails: (saleId: string) => ['saleDetails', saleId] as const,
     debtDetails: (debtId: string) => ['debtDetails', debtId] as const,
+    customerOrders: (page: number, limit: number, shopId?: string) => ['customerOrders', page, limit, shopId] as const,
+    shopOnlineSettings: (shopId: string) => ['shopOnlineSettings', shopId] as const,
 };
 
 // ============================================
@@ -661,3 +665,66 @@ export function useSilentShops() {
         staleTime: 60000,
     });
 }
+
+// ============================================
+// ONLINE SHOP FEATURES
+// ============================================
+
+export function useCustomerOrders(page = 1, limit = 20, shopId?: string) {
+    return useQuery({
+        queryKey: queryKeys.customerOrders(page, limit, shopId),
+        queryFn: async () => {
+            const offset = (page - 1) * limit;
+            let query = supabase
+                .from('customer_orders')
+                .select('*, shops!inner(name)', { count: 'exact' });
+
+            if (shopId) {
+                query = query.eq('shop_id', shopId);
+            }
+
+            const { data, error, count } = await query
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
+
+            if (error) throw error;
+
+            // Flatten shop name
+            const orders = (data || []).map((order: any) => ({
+                ...order,
+                shop_name: order.shops?.name
+            }));
+
+            return {
+                data: orders as CustomerOrder[],
+                total: count || 0,
+                totalPages: Math.ceil((count || 0) / limit),
+            };
+        },
+        staleTime: 30000,
+    });
+}
+
+export function useUpdateOnlineSettings() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ shopId, updates }: { shopId: string; updates: Partial<DatabaseShop> }) => {
+            const { data, error } = await (supabase
+                .from('shops') as any)
+                .update(updates)
+                .eq('id', shopId)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data as DatabaseShop;
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['shopsOverview'] });
+            queryClient.invalidateQueries({ queryKey: ['shopDetails', variables.shopId] });
+            queryClient.invalidateQueries({ queryKey: ['customerOrders'] });
+        }
+    });
+}
+
