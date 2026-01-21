@@ -133,7 +133,7 @@ export default function SignupPage() {
                                         disabled={isLoading}
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-[var(--bg-app)]/50 border border-[var(--border-subtle)] rounded-2xl pl-12 pr-5 py-4 text-sm text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-muted)]"
+                                        className="w-full bg-[var(--bg-app)] border border-[var(--border-subtle)] rounded-2xl pl-12 pr-5 py-4 text-sm text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-secondary)] caret-[var(--primary)]"
                                         placeholder="agent@velmo.cloud"
                                     />
                                 </div>
@@ -151,7 +151,7 @@ export default function SignupPage() {
                                             disabled={isLoading}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full bg-[var(--bg-app)]/50 border border-[var(--border-subtle)] rounded-2xl pl-11 pr-5 py-3.5 text-xs text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-muted)]"
+                                            className="w-full bg-[var(--bg-app)] border border-[var(--border-subtle)] rounded-2xl pl-11 pr-5 py-3.5 text-xs text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-secondary)] caret-[var(--primary)]"
                                             placeholder="••••••••"
                                         />
                                     </div>
@@ -166,7 +166,7 @@ export default function SignupPage() {
                                             disabled={isLoading}
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="w-full bg-[var(--bg-app)]/50 border border-[var(--border-subtle)] rounded-2xl pl-11 pr-5 py-3.5 text-xs text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-muted)]"
+                                            className="w-full bg-[var(--bg-app)] border border-[var(--border-subtle)] rounded-2xl pl-11 pr-5 py-3.5 text-xs text-[var(--text-primary)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--primary)]/20 transition-all font-bold placeholder:text-[var(--text-secondary)] caret-[var(--primary)]"
                                             placeholder="••••••••"
                                         />
                                     </div>

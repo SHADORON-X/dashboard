@@ -186,7 +186,7 @@ export default function DebtsPage() {
                         placeholder="Rechercher un client, un dossier ou une boutique..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-muted)]/40 transition-all font-bold"
+                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-secondary)] transition-all font-bold"
                     />
                 </div>
                 <div className="flex items-center gap-2 px-2">

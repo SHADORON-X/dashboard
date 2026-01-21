@@ -177,7 +177,7 @@ export default function ProductsPage() {
                         placeholder="Scanner un code-barre ou rechercher une référence..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-muted)]/40 transition-all font-bold"
+                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-secondary)] transition-all font-bold"
                     />
                 </div>
                 <div className="hidden lg:block h-8 w-px bg-[var(--border-subtle)] mx-2" />

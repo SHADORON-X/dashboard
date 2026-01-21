@@ -235,7 +235,7 @@ export default function ShopsPage() {
                         placeholder="Rechercher par nom de boutique, ID Velmo ou propriétaire..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-muted)]/40 transition-all font-bold"
+                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--primary)]/50 placeholder:text-[var(--text-secondary)] transition-all font-bold caret-[var(--primary)]"
                     />
                 </div>
 

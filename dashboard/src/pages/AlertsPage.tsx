@@ -250,7 +250,7 @@ export default function AlertsPage() {
                     <input
                         type="text"
                         placeholder="Rechercher par boutique, produit ou propriétaire..."
-                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-0 placeholder:text-[var(--text-muted)]/40 font-bold"
+                        className="w-full bg-transparent border-none rounded-xl pl-12 pr-4 py-3 text-sm text-[var(--text-primary)] focus:ring-0 placeholder:text-[var(--text-secondary)] font-bold"
                     />
                 </div>
                 <div className="flex bg-[var(--bg-app)]/50 p-1 rounded-xl border border-[var(--border-subtle)]">
